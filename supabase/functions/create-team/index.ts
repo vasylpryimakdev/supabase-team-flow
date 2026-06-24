@@ -1,14 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "../_shared/supabaseClient.ts";
-
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-  };
-}
+import { createSupabaseUserClient } from "../_shared/supabaseClient.ts";
+import { corsHeaders } from "../_shared/cors.ts";
+import { getUser } from "../_shared/auth.ts";
 
 function generateInviteCode(length = 6) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -23,44 +16,58 @@ function generateInviteCode(length = 6) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders() });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      {
-        global: {
-          headers: {
-            Authorization: req.headers.get("Authorization")!,
-          },
-        },
-      },
-    );
+    const user = await getUser(req);
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
+    if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: corsHeaders(),
+        headers: corsHeaders,
       });
     }
+
+    const supabase = createSupabaseUserClient(req);
 
     const { name } = await req.json();
 
     if (!name) {
       return new Response(JSON.stringify({ error: "Team name required" }), {
         status: 400,
-        headers: corsHeaders(),
+        headers: corsHeaders,
       });
     }
 
-    const inviteCode = generateInviteCode();
+    // 🔴 ENFORCE ONE TEAM PER USER
+    const { data: existing } = await supabase
+      .from("team_members")
+      .select("team_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existing) {
+      return new Response(
+        JSON.stringify({ error: "User already has a team" }),
+        { status: 400, headers: corsHeaders },
+      );
+    }
+
+    let inviteCode = generateInviteCode();
+
+    // ensure uniqueness
+    let unique = false;
+    while (!unique) {
+      const { data } = await supabaseAdmin
+        .from("teams")
+        .select("id")
+        .eq("invite_code", inviteCode)
+        .maybeSingle();
+
+      if (!data) unique = true;
+      else inviteCode = generateInviteCode();
+    }
 
     const { data: team, error: teamError } = await supabaseAdmin
       .from("teams")
@@ -74,11 +81,12 @@ Deno.serve(async (req) => {
     if (teamError) {
       return new Response(JSON.stringify(teamError), {
         status: 500,
-        headers: corsHeaders(),
+        headers: corsHeaders,
       });
     }
 
-    const { error: memberError } = await supabaseAdmin.from("team_members")
+    const { error: memberError } = await supabaseAdmin
+      .from("team_members")
       .insert({
         user_id: user.id,
         team_id: team.id,
@@ -88,7 +96,7 @@ Deno.serve(async (req) => {
     if (memberError) {
       return new Response(JSON.stringify(memberError), {
         status: 500,
-        headers: corsHeaders(),
+        headers: corsHeaders,
       });
     }
 
@@ -97,7 +105,7 @@ Deno.serve(async (req) => {
       {
         status: 200,
         headers: {
-          ...corsHeaders(),
+          ...corsHeaders,
           "Content-Type": "application/json",
         },
       },
@@ -109,7 +117,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: corsHeaders(),
+        headers: corsHeaders,
       },
     );
   }

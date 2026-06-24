@@ -1,14 +1,16 @@
-import { supabaseAnon } from "./supabaseClient.ts";
+import { createSupabaseUserClient } from "./supabaseClient.ts";
 
 export async function getUser(req: Request) {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return null;
-
-  const token = authHeader.replace("Bearer ", "");
+  const supabase = createSupabaseUserClient(req);
 
   const {
     data: { user },
-  } = await supabaseAnon.auth.getUser(token);
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error) {
+    throw new Error("Invalid auth token");
+  }
 
   return user;
 }
