@@ -1,66 +1,84 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "../_shared/supabaseClient.ts";
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-);
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
-// helper: generate invite code
 function generateInviteCode(length = 6) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
+
   for (let i = 0; i < length; i++) {
     result += chars[Math.floor(Math.random() * chars.length)];
   }
+
   return result;
 }
 
 Deno.serve(async (req) => {
-  try {
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders() });
+  }
 
-    // 1. get user from JWT
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      {
+        global: {
+          headers: {
+            Authorization: req.headers.get("Authorization")!,
+          },
+        },
+      },
+    );
+
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser(token);
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
+        headers: corsHeaders(),
       });
     }
 
-    const body = await req.json();
-    const teamName = body.name;
+    const { name } = await req.json();
 
-    if (!teamName) {
+    if (!name) {
       return new Response(JSON.stringify({ error: "Team name required" }), {
         status: 400,
+        headers: corsHeaders(),
       });
     }
 
-    // 2. generate invite code
     const inviteCode = generateInviteCode();
 
-    // 3. create team
-    const { data: team, error: teamError } = await supabase
+    const { data: team, error: teamError } = await supabaseAdmin
       .from("teams")
       .insert({
-        name: teamName,
+        name,
         invite_code: inviteCode,
       })
       .select()
       .single();
 
     if (teamError) {
-      return new Response(JSON.stringify(teamError), { status: 500 });
+      return new Response(JSON.stringify(teamError), {
+        status: 500,
+        headers: corsHeaders(),
+      });
     }
 
-    // 4. add member
-    const { error: memberError } = await supabase
-      .from("team_members")
+    const { error: memberError } = await supabaseAdmin.from("team_members")
       .insert({
         user_id: user.id,
         team_id: team.id,
@@ -68,22 +86,31 @@ Deno.serve(async (req) => {
       });
 
     if (memberError) {
-      return new Response(JSON.stringify(memberError), { status: 500 });
+      return new Response(JSON.stringify(memberError), {
+        status: 500,
+        headers: corsHeaders(),
+      });
     }
 
-    // 5. return result
     return new Response(
-      JSON.stringify({
-        team,
-        inviteCode,
-      }),
+      JSON.stringify({ team, inviteCode }),
       {
-        headers: { "Content-Type": "application/json" },
-      }
+        status: 200,
+        headers: {
+          ...corsHeaders(),
+          "Content-Type": "application/json",
+        },
+      },
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({
+        error: err instanceof Error ? err.message : "Unknown error",
+      }),
+      {
+        status: 500,
+        headers: corsHeaders(),
+      },
+    );
   }
 });

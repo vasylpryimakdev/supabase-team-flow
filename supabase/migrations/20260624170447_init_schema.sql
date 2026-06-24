@@ -61,9 +61,17 @@ using (
   )
 );
 
+create policy "users can insert teams"
+on teams for insert
+with check (auth.uid() is not null);
+
 create policy "users can read their membership"
 on team_members for select
 using (user_id = auth.uid());
+
+create policy "users can insert their membership"
+on team_members for insert
+with check (user_id = auth.uid());
 
 create policy "read team products"
 on products for select
