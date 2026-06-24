@@ -1,46 +1,89 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { createClient } from "npm:@supabase/supabase-js@2";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts";
-import { withSupabase } from "@supabase/server";
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
 
-console.log("Hello from Functions!");
+// helper: generate invite code
+function generateInviteCode(length = 6) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
 
-// This endpoint uses 'publishable' | 'secret' access, apiKey is required.
-// Use publishable for Client-facing, key-validated endpoints
-// Use secret for Server-to-server, internal calls
-export default {
-  fetch: withSupabase({ auth: ["publishable", "secret"] }, async (req, ctx) => {
-    // Called by another service with a secret key
-    // ctx.supabaseAdmin bypasses RLS — use for privileged operations
-    /*
-    if (ctx.authMode === "secret") {
-      const { user_id } = await req.json();
-      const { data } = await ctx.supabaseAdmin.auth.admin.getUserById(user_id);
+Deno.serve(async (req) => {
+  try {
+    const authHeader = req.headers.get("Authorization")!;
+    const token = authHeader.replace("Bearer ", "");
 
-      return Response.json({
-        email: data?.user?.email,
+    // 1. get user from JWT
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
       });
     }
-    */
 
-    const { name } = await req.json();
+    const body = await req.json();
+    const teamName = body.name;
 
-    return Response.json({
-      message: `Hello ${name}!`,
+    if (!teamName) {
+      return new Response(JSON.stringify({ error: "Team name required" }), {
+        status: 400,
+      });
+    }
+
+    // 2. generate invite code
+    const inviteCode = generateInviteCode();
+
+    // 3. create team
+    const { data: team, error: teamError } = await supabase
+      .from("teams")
+      .insert({
+        name: teamName,
+        invite_code: inviteCode,
+      })
+      .select()
+      .single();
+
+    if (teamError) {
+      return new Response(JSON.stringify(teamError), { status: 500 });
+    }
+
+    // 4. add member
+    const { error: memberError } = await supabase
+      .from("team_members")
+      .insert({
+        user_id: user.id,
+        team_id: team.id,
+        role: "owner",
+      });
+
+    if (memberError) {
+      return new Response(JSON.stringify(memberError), { status: 500 });
+    }
+
+    // 5. return result
+    return new Response(
+      JSON.stringify({
+        team,
+        inviteCode,
+      }),
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
     });
-  }),
-};
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/create-team' \
-    --header 'apiKey: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' \
-    --data '{"name":"Functions"}'
-
-*/
+  }
+});
