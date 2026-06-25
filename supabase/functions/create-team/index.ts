@@ -1,5 +1,4 @@
 import { supabaseAdmin } from "../_shared/supabaseClient.ts";
-import { createSupabaseUserClient } from "../_shared/supabaseClient.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getUser } from "../_shared/auth.ts";
 
@@ -22,51 +21,56 @@ Deno.serve(async (req) => {
   try {
     const user = await getUser(req);
 
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
+    if (!user?.id) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: corsHeaders,
+        },
+      );
     }
-
-    const supabase = createSupabaseUserClient(req);
 
     const { name } = await req.json();
 
-    if (!name) {
-      return new Response(JSON.stringify({ error: "Team name required" }), {
-        status: 400,
-        headers: corsHeaders,
-      });
+    if (!name || typeof name !== "string") {
+      return new Response(
+        JSON.stringify({ error: "Team name is required" }),
+        {
+          status: 400,
+          headers: corsHeaders,
+        },
+      );
     }
 
-    // 🔴 ENFORCE ONE TEAM PER USER
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
       .from("team_members")
       .select("team_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existing) {
+    if (existing?.team_id) {
       return new Response(
         JSON.stringify({ error: "User already has a team" }),
-        { status: 400, headers: corsHeaders },
+        {
+          status: 400,
+          headers: corsHeaders,
+        },
       );
     }
 
     let inviteCode = generateInviteCode();
 
-    // ensure uniqueness
-    let unique = false;
-    while (!unique) {
+    for (let i = 0; i < 5; i++) {
       const { data } = await supabaseAdmin
         .from("teams")
         .select("id")
         .eq("invite_code", inviteCode)
         .maybeSingle();
 
-      if (!data) unique = true;
-      else inviteCode = generateInviteCode();
+      if (!data) break;
+
+      inviteCode = generateInviteCode();
     }
 
     const { data: team, error: teamError } = await supabaseAdmin
@@ -79,10 +83,13 @@ Deno.serve(async (req) => {
       .single();
 
     if (teamError) {
-      return new Response(JSON.stringify(teamError), {
-        status: 500,
-        headers: corsHeaders,
-      });
+      return new Response(
+        JSON.stringify({ error: teamError.message }),
+        {
+          status: 500,
+          headers: corsHeaders,
+        },
+      );
     }
 
     const { error: memberError } = await supabaseAdmin
@@ -94,14 +101,20 @@ Deno.serve(async (req) => {
       });
 
     if (memberError) {
-      return new Response(JSON.stringify(memberError), {
-        status: 500,
-        headers: corsHeaders,
-      });
+      return new Response(
+        JSON.stringify({ error: memberError.message }),
+        {
+          status: 500,
+          headers: corsHeaders,
+        },
+      );
     }
 
     return new Response(
-      JSON.stringify({ team, inviteCode }),
+      JSON.stringify({
+        team,
+        inviteCode,
+      }),
       {
         status: 200,
         headers: {
@@ -111,6 +124,8 @@ Deno.serve(async (req) => {
       },
     );
   } catch (err) {
+    console.error("create-team error:", err);
+
     return new Response(
       JSON.stringify({
         error: err instanceof Error ? err.message : "Unknown error",

@@ -1,16 +1,17 @@
-import { createSupabaseUserClient } from "./supabaseClient.ts";
+import { createClient } from "@supabase/supabase-js";
 
 export async function getUser(req: Request) {
-  const supabase = createSupabaseUserClient(req);
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return null;
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const token = authHeader.replace("Bearer ", "");
 
-  if (error) {
-    throw new Error("Invalid auth token");
-  }
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!
+  );
 
-  return user;
+  const { data } = await supabase.auth.getUser(token);
+
+  return data.user;
 }
