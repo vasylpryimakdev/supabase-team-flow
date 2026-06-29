@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Alert, AlertDescription } from "../components/ui/alert";
 
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
@@ -105,12 +104,6 @@ export default function SignInPage() {
               </button>
             </div>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
             <Button
               className="h-10 w-full bg-white text-black hover:bg-white/90 transition"
               type="submit"
@@ -118,6 +111,10 @@ export default function SignInPage() {
             >
               {loading ? "Signing in..." : "Sign in"}
             </Button>
+
+            {error && (
+              <span className="block text-sm text-red-400">{error}</span>
+            )}
 
             <Button
               type="button"

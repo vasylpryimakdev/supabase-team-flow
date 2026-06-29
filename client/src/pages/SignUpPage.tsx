@@ -10,9 +10,9 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Alert, AlertDescription } from "../components/ui/alert";
 
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Spinner } from "../components/custom/Spinner";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
@@ -42,6 +42,8 @@ export default function SignUpPage() {
     setLoading(false);
 
     if (error) {
+      console.log(error);
+
       setError(error.message);
       return;
     }
@@ -60,6 +62,7 @@ export default function SignUpPage() {
     });
 
     if (error) {
+      console.log(error);
       setError(error.message);
     }
   };
@@ -73,7 +76,7 @@ export default function SignUpPage() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form noValidate onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
               <Input
@@ -107,25 +110,24 @@ export default function SignUpPage() {
               </button>
             </div>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            <div>
+              <Button
+                className="h-10 w-full bg-white text-black hover:bg-white/90 transition"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? <Spinner /> : "Create account"}
+              </Button>
+              {error && (
+                <span className="block text-sm text-red-400">{error}</span>
+              )}
 
-            {success && (
-              <Alert>
-                <AlertDescription>{success}</AlertDescription>
-              </Alert>
-            )}
-
-            <Button
-              className="h-10 w-full bg-white text-black hover:bg-white/90 transition"
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "Creating..." : "Create account"}
-            </Button>
+              {success && (
+                <span className="block text-sm text-green-400">
+                  {success}
+                </span>
+              )}
+            </div>
             <Button
               type="button"
               onClick={handleGoogleSignIn}
