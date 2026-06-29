@@ -1,5 +1,5 @@
-import { Dashboard } from "./components/Dashboard";
+import { Router } from "./router/router";
 
 export default function App() {
-  return <Dashboard />;
+  return <Router />;
 }
