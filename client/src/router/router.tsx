@@ -6,6 +6,7 @@ export function Router() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/auth/callback" element={<SignUpPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
 

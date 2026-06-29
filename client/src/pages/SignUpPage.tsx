@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Button } from "../components/ui/button";
 import { supabase } from "../lib/supabase";
@@ -15,8 +15,6 @@ import { Alert, AlertDescription } from "../components/ui/alert";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 export default function SignUpPage() {
-  const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -25,26 +23,6 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  // 🔥 AUTH LISTENER
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("AUTH EVENT:", event);
-        console.log("SESSION:", session);
-
-        if (event === "SIGNED_IN" && session?.user) {
-          console.log("USER CONFIRMED:", session.user);
-
-          navigate("/onboarding");
-        }
-      },
-    );
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +44,24 @@ export default function SignUpPage() {
     }
 
     setSuccess("Check your email to confirm your account.");
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError("");
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
+    }
   };
 
   return (
@@ -130,6 +126,13 @@ export default function SignUpPage() {
               disabled={loading}
             >
               {loading ? "Creating..." : "Create account"}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="h-10 w-full bg-white/10 text-white border border-white/20 hover:bg-white/20 transition"
+            >
+              Continue with Google
             </Button>
 
             <p className="text-center text-sm text-white/60">
