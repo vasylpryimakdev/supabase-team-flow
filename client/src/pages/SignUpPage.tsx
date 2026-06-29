@@ -1,31 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+
+import { Button } from "../components/ui/button";
+import { supabase } from "../lib/supabase";
 import {
-  Alert,
-  Box,
-  Button,
   Card,
   CardContent,
-  CircularProgress,
-  Link,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Alert, AlertDescription } from "../components/ui/alert";
+
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 export default function SignUpPage() {
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // 🔥 AUTH LISTENER
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("AUTH EVENT:", event);
+        console.log("SESSION:", session);
+
+        if (event === "SIGNED_IN" && session?.user) {
+          console.log("USER CONFIRMED:", session.user);
+
+          navigate("/onboarding");
+        }
+      },
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setLoading(true);
@@ -35,11 +56,6 @@ export default function SignUpPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          name,
-        },
-      },
     });
 
     setLoading(false);
@@ -49,84 +65,82 @@ export default function SignUpPage() {
       return;
     }
 
-    setSuccess(
-      "Registration successful. Check your email to confirm your account.",
-    );
-
-    setTimeout(() => navigate("/signin"), 2500);
+    setSuccess("Check your email to confirm your account.");
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        bgcolor: "#f5f5f5",
-        p: 2,
-      }}
-    >
-      <Card sx={{ width: 420 }}>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+      <Card className="w-full max-w-md backdrop-blur-xl bg-white/10 border border-white/10 shadow-2xl rounded-2xl p-4">
+        <CardHeader className="mb-2">
+          <CardTitle className="text-center text-3xl font-bold text-white">
+            Create account
+          </CardTitle>
+        </CardHeader>
+
         <CardContent>
-          <Typography variant="h4" sx={{ textAlign: "center", mb: 3 }}>
-            Sign Up
-          </Typography>
-
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={2}>
-              <TextField
-                label="Name"
-                fullWidth
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-
-              <TextField
-                label="Email"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+              <Input
                 type="email"
-                fullWidth
-                required
+                placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-              />
-
-              <TextField
-                label="Password"
-                type="password"
-                fullWidth
                 required
+                className="h-10 pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              />
+            </div>
+
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
+                className="h-10 pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
               />
 
-              {error && <Alert severity="error">{error}</Alert>}
-
-              {success && <Alert severity="success">{success}</Alert>}
-
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={loading}
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-3 top-3 text-white/50 hover:text-white"
               >
-                {loading ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  "Create account"
-                )}
-              </Button>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
 
-              <Typography sx={{ textAlign: "center" }}>
-                Already have an account?{" "}
-                <Link component={RouterLink} to="/signin">
-                  Sign In
-                </Link>
-              </Typography>
-            </Stack>
-          </Box>
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {success && (
+              <Alert>
+                <AlertDescription>{success}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              className="h-10 w-full bg-white text-black hover:bg-white/90 transition"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Creating..." : "Create account"}
+            </Button>
+
+            <p className="text-center text-sm text-white/60">
+              Already have an account?{" "}
+              <Link to="/signin" className="text-white underline">
+                Sign in
+              </Link>
+            </p>
+          </form>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 }

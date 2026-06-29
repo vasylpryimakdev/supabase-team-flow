@@ -3,10 +3,26 @@ create extension if not exists "pg_trgm";
 
 create table profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  name text not null,
+  name text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, name)
+  values (new.id, '');
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
 
 create table teams (
   id uuid primary key default gen_random_uuid(),
