@@ -8,6 +8,7 @@ import NotFoundPage from "../pages/NotFoundPage";
 import { ProtectedRoutes } from "../components/custom/ProtectedRoute";
 import { OnboardingGuard } from "../components/custom/OnboardingGuard";
 import { AppGate } from "../components/custom/AppGate";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 
 export function Router() {
   return (
@@ -17,7 +18,7 @@ export function Router() {
 
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/signin" element={<SignInPage />} />
-        <Route path="/forgot-password" element={<SignInPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/v1/callback" element={<AuthCallbackPage />} />
 
         <Route element={<ProtectedRoutes />}>
