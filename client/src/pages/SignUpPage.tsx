@@ -34,6 +34,9 @@ export default function SignUpPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/v1/callback`,
+      },
     });
 
     setLoading(false);
@@ -47,23 +50,19 @@ export default function SignUpPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
     setError("");
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: `${window.location.origin}/auth/v1/callback`,
       },
     });
-
-    setLoading(false);
 
     if (error) {
       setError(error.message);
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
       <Card className="w-full max-w-md backdrop-blur-xl bg-white/10 border border-white/10 shadow-2xl rounded-2xl p-4">
