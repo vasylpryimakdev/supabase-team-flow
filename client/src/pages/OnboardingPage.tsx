@@ -20,7 +20,7 @@ export default function OnboardingPage() {
   const [mode, setMode] = useState<Mode>("create");
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen">
       <Card className="w-[420px] p-4">
         <CardHeader className="mb-4">
           <CardTitle className="text-2xl">Welcome 👋</CardTitle>
