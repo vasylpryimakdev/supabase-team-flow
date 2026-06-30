@@ -2,6 +2,8 @@ import { useLocation, Navigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/auth.store";
 import { Spinner } from "./Spinner";
 
+const authRoutes = ["/auth/signin", "/auth/signup", "/auth/forgot-password"];
+
 export function RouteResolver({ children }: { children: React.ReactNode }) {
   const { user, team, status, isRecovery } = useAuthStore();
   const { pathname } = useLocation();
@@ -14,15 +16,14 @@ export function RouteResolver({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    if (pathname !== "/auth") {
-      return <Navigate to="/auth" replace />;
+    if (!authRoutes.includes(pathname)) {
+      return <Navigate to="/auth/signin" replace />;
     }
+    
     return children;
   }
 
-  if (team === undefined) {
-    return <Spinner />;
-  }
+  if (team === undefined) return <Spinner />;
 
   if (!team) {
     if (pathname !== "/onboarding") {
@@ -31,7 +32,7 @@ export function RouteResolver({ children }: { children: React.ReactNode }) {
     return children;
   }
 
-  if (pathname === "/auth") {
+  if (authRoutes.includes(pathname)) {
     return <Navigate to="/dashboard" replace />;
   }
 

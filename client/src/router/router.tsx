@@ -1,13 +1,15 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 
 import OnboardingPage from "../pages/OnboardingPage";
 import NotFoundPage from "../pages/NotFoundPage";
-import AuthPage from "../pages/AuthPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
 import Dashboard from "../components/custom/Dashboard";
 import { ProtectedRoute } from "../components/custom/ProtectedRoute";
-import { ErrorBoundary } from "../components/ErrorBoundary";
 import { RouteResolver } from "../components/custom/RouteResolver";
+import { ErrorBoundary } from "../components/custom/ErrorBoundary";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import SignInPage from "../pages/SignInPage";
+import SignUpPage from "../pages/SignUpPage";
 
 export function Router() {
   return (
@@ -15,7 +17,11 @@ export function Router() {
       <ErrorBoundary>
         <RouteResolver>
           <Routes>
-            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/auth" element={<Outlet />}>
+              <Route path="signin" element={<SignInPage />} />
+              <Route path="signup" element={<SignUpPage />} />
+              <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            </Route>
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             <Route element={<ProtectedRoute />}>
