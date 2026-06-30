@@ -51,3 +51,7 @@
     @apply border-border;
   }
 }
+
+.supabase-auth-ui_ui-button {
+  color: #000 !important;
+}

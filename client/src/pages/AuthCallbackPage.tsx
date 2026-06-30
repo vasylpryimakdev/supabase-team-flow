@@ -20,7 +20,7 @@ export default function AuthCallbackPage() {
         console.error("Auth callback error:", error);
         setStatus("unauthenticated");
         setMessage("Authentication failed");
-        navigate("/signup");
+        navigate("/auth");
         return;
       }
 
@@ -29,7 +29,7 @@ export default function AuthCallbackPage() {
       if (!session?.user) {
         setStatus("unauthenticated");
         setMessage("No session found");
-        navigate("/signup");
+        navigate("/auth");
         return;
       }
 

@@ -1,14 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import SignUpPage from "../pages/SignUpPage";
-import SignInPage from "../pages/SignInPage";
 import OnboardingPage from "../pages/OnboardingPage";
 import AuthCallbackPage from "../pages/AuthCallbackPage";
 import NotFoundPage from "../pages/NotFoundPage";
-import { ProtectedRoutes } from "../components/custom/ProtectedRoute";
-import { OnboardingGuard } from "../components/custom/OnboardingGuard";
 import { AppGate } from "../components/custom/AppGate";
-import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import AuthPage from "../pages/AuthPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
+import Dashboard from "../components/custom/Dashboard";
+import { ProtectedRoute } from "../components/custom/ProtectedRoute";
 
 export function Router() {
   return (
@@ -16,17 +15,13 @@ export function Router() {
       <Routes>
         <Route path="/" element={<AppGate />} />
 
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/signin" element={<SignInPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/v1/callback" element={<AuthCallbackPage />} />
 
-        <Route element={<ProtectedRoutes />}>
+        <Route element={<ProtectedRoute />}>
           <Route path="/onboarding" element={<OnboardingPage />} />
-
-          <Route element={<OnboardingGuard />}>
-            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-          </Route>
+          <Route path="/dashboard" element={<Dashboard />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
