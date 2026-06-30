@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
+import type { Subscription } from "@supabase/supabase-js";
 
 type User = {
   id: string;
@@ -8,101 +9,87 @@ type User = {
 
 type Team = {
   id: string;
-  name?: string;
 };
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 type AuthStore = {
   user: User | null;
-  team: Team | null;
+  team: Team | null | undefined;
   status: AuthStatus;
   initialized: boolean;
+
   isRecovery: boolean;
 
   initAuth: () => void;
-  setUser: (user: User | null) => void;
-  setTeam: (team: Team | null) => void;
-  setStatus: (status: AuthStatus) => void;
-  setRecovery: (value: boolean) => void;
-
+  setRecovery: (v: boolean) => void;
   loadTeam: (userId: string) => Promise<void>;
 };
 
-let authSubscription:
-  | ReturnType<typeof supabase.auth.onAuthStateChange>
-  | null = null;
+let subscription: Subscription | null = null;
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
-  team: null,
+  team: undefined,
   status: "loading",
   initialized: false,
   isRecovery: false,
 
-  setUser: (user) => set({ user }),
-  setTeam: (team) => set({ team }),
-  setStatus: (status) => set({ status }),
-  setRecovery: (value) => set({ isRecovery: value }),
+  setRecovery: (v) => set({ isRecovery: v }),
 
   loadTeam: async (userId) => {
-    const { data, error } = await supabase
+    set({ team: undefined });
+
+    const { data } = await supabase
       .from("profiles")
       .select("team_id")
       .eq("id", userId)
       .single();
 
-    if (error || !data?.team_id) {
-      set({ team: null });
-      return;
-    }
-
     set({
-      team: { id: data.team_id },
+      team: data?.team_id ? { id: data.team_id } : null,
     });
   },
 
   initAuth: () => {
     if (get().initialized) return;
 
-    set({ status: "loading", initialized: true });
+    set({ initialized: true, status: "loading" });
 
-    const hash = window.location.hash;
-    const isRecovery = hash.includes("type=recovery");
+    const hash = window.location.hash || "";
+    const isRecovery = hash.includes("type=recovery")
 
     set({ isRecovery });
 
-    const loadSession = async () => {
+    const init = async () => {
       const { data } = await supabase.auth.getSession();
+
       const session = data.session;
 
       if (!session?.user) {
         set({
           user: null,
-          team: null,
           status: "unauthenticated",
         });
         return;
       }
 
-      const user = {
-        id: session.user.id,
-        email: session.user.email ?? null,
-      };
-
       set({
-        user,
+        user: {
+          id: session.user.id,
+          email: session.user.email ?? null,
+        },
         status: "authenticated",
       });
 
-      await get().loadTeam(user.id);
+      await get().loadTeam(session.user.id);
     };
 
-    loadSession();
+    init();
 
-    if (!authSubscription) {
-      authSubscription = supabase.auth.onAuthStateChange(
-        async (_event, session) => {
+    if (!subscription) {
+      const { data } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
           const user = session?.user
             ? {
               id: session.user.id,
@@ -110,7 +97,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             }
             : null;
 
-          if (!user) {
+          if (event === "PASSWORD_RECOVERY") {
+            set({
+              isRecovery: true,
+              user: null,
+              team: null,
+              status: "unauthenticated",
+            });
+            return;
+          }
+
+          if (event === "SIGNED_OUT") {
             set({
               user: null,
               team: null,
@@ -119,14 +116,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             return;
           }
 
-          set({
-            user,
-            status: "authenticated",
-          });
+          if (event === "SIGNED_IN" && user) {
+            set({
+              user,
+              status: "authenticated",
+            });
 
-          await get().loadTeam(user.id);
+            await get().loadTeam(user.id);
+          }
         },
       );
+
+      subscription = data.subscription;
     }
   },
 }));

@@ -10,11 +10,23 @@
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
 
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
     --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
@@ -24,23 +36,33 @@
   }
 
   .dark {
-    --background: 222 47% 7%;
+    --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 10%;
+    --card: 222.2 84% 6%;
     --card-foreground: 210 40% 98%;
 
-    --muted: 223 20% 18%;
-    --muted-foreground: 215 15% 65%;
+    --popover: 222.2 84% 6%;
+    --popover-foreground: 210 40% 98%;
 
-    --border: 223 20% 20%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
 
-    --input: 223 20% 16%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 222 47% 7%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --ring: 0 0% 100% / 0.2;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
 
   body {
@@ -52,6 +74,21 @@
   }
 }
 
-.supabase-auth-ui_ui-button {
-  color: #000 !important;
+.sb-input {
+  @apply w-full rounded-md bg-white/5 border border-white/10 text-white
+  placeholder:text-white/40 px-3 py-2 text-sm
+  focus:outline-none focus:border-white/30 transition;
+}
+
+.sb-button {
+  @apply w-full rounded-md bg-white text-black text-sm font-medium
+  py-2 hover:bg-white/90 transition disabled:opacity-40 disabled:cursor-not-allowed;
+}
+
+.sb-card {
+  @apply bg-white/5 border border-white/10 backdrop-blur-md;
+}
+
+.supabase-auth-ui_ui-anchor[href*="forgotten_password"] {
+  display: none;
 }
