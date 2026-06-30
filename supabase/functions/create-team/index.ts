@@ -1,95 +1,66 @@
 import { supabaseAdmin } from "../_shared/supabaseClient.ts";
-import { corsHeaders } from "../_shared/cors.ts";
-import { getUser } from "../_shared/auth.ts";
 
 function generateInviteCode(length = 6) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
+  let code = "";
 
   for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
+    code += chars[Math.floor(Math.random() * chars.length)];
   }
 
-  return result;
+  return code;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
   try {
-    const user = await getUser(req);
+    const authHeader = req.headers.get("Authorization");
 
-    if (!user?.id) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          status: 401,
-          headers: corsHeaders,
-        },
-      );
+    if (!authHeader) {
+      return new Response("Missing Authorization header", { status: 401 });
     }
 
-    const { name } = await req.json();
+    const token = authHeader.replace("Bearer ", "");
 
-    if (!name || typeof name !== "string") {
-      return new Response(
-        JSON.stringify({ error: "Team name is required" }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        },
-      );
+    const { data: userData, error: userError } = await supabaseAdmin.auth
+      .getUser(token);
+
+    if (userError || !userData?.user) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
-    const { data: existing } = await supabaseAdmin
+    const user = userData.user;
+
+    const { teamName } = await req.json();
+
+    if (!teamName?.trim()) {
+      return new Response("Team name is required", { status: 400 });
+    }
+
+    const { data: existingMember } = await supabaseAdmin
       .from("team_members")
-      .select("team_id")
+      .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existing?.team_id) {
-      return new Response(
-        JSON.stringify({ error: "User already has a team" }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        },
-      );
+    if (existingMember) {
+      return new Response("User already has a team", { status: 400 });
     }
 
-    let inviteCode = generateInviteCode();
-
-    for (let i = 0; i < 5; i++) {
-      const { data } = await supabaseAdmin
-        .from("teams")
-        .select("id")
-        .eq("invite_code", inviteCode)
-        .maybeSingle();
-
-      if (!data) break;
-
-      inviteCode = generateInviteCode();
-    }
+    const invite_code = generateInviteCode();
 
     const { data: team, error: teamError } = await supabaseAdmin
       .from("teams")
       .insert({
-        name,
-        invite_code: inviteCode,
+        name: teamName,
+        invite_code,
       })
       .select()
       .single();
 
-    if (teamError) {
-      return new Response(
-        JSON.stringify({ error: teamError.message }),
-        {
-          status: 500,
-          headers: corsHeaders,
-        },
-      );
+    if (teamError || !team) {
+      return new Response(teamError?.message || "Team creation failed", {
+        status: 500,
+      });
     }
 
     const { error: memberError } = await supabaseAdmin
@@ -101,39 +72,19 @@ Deno.serve(async (req) => {
       });
 
     if (memberError) {
-      return new Response(
-        JSON.stringify({ error: memberError.message }),
-        {
-          status: 500,
-          headers: corsHeaders,
-        },
-      );
+      return new Response(memberError.message, { status: 500 });
     }
 
     return new Response(
       JSON.stringify({
         team,
-        inviteCode,
+        invite_code,
       }),
       {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       },
     );
   } catch (err) {
-    console.error("create-team error:", err);
-
-    return new Response(
-      JSON.stringify({
-        error: err instanceof Error ? err.message : "Unknown error",
-      }),
-      {
-        status: 500,
-        headers: corsHeaders,
-      },
-    );
+    return new Response(String(err), { status: 500 });
   }
 });

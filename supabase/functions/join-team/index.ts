@@ -1,46 +1,63 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { supabaseAdmin } from "../_shared/supabaseClient.ts";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts";
-import { withSupabase } from "@supabase/server";
+function getUserFromToken(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) throw new Error("Missing auth");
 
-console.log("Hello from Functions!");
+  return authHeader.replace("Bearer ", "");
+}
 
-// This endpoint uses 'publishable' | 'secret' access, apiKey is required.
-// Use publishable for Client-facing, key-validated endpoints
-// Use secret for Server-to-server, internal calls
-export default {
-  fetch: withSupabase({ auth: ["publishable", "secret"] }, async (req, ctx) => {
-    // Called by another service with a secret key
-    // ctx.supabaseAdmin bypasses RLS — use for privileged operations
-    /*
-    if (ctx.authMode === "secret") {
-      const { user_id } = await req.json();
-      const { data } = await ctx.supabaseAdmin.auth.admin.getUserById(user_id);
+Deno.serve(async (req) => {
+  try {
+    const token = getUserFromToken(req);
 
-      return Response.json({
-        email: data?.user?.email,
-      });
+    const {
+      data: { user },
+      error,
+    } = await supabaseAdmin.auth.getUser(token);
+
+    if (error || !user) {
+      return new Response("Unauthorized", { status: 401 });
     }
-    */
 
-    const { name } = await req.json();
+    const { inviteCode } = await req.json();
 
-    return Response.json({
-      message: `Hello ${name}!`,
+    const { data: team, error: teamError } = await supabaseAdmin
+      .from("teams")
+      .select("*")
+      .eq("invite_code", inviteCode)
+      .single();
+
+    if (teamError || !team) {
+      return new Response("Team not found", { status: 404 });
+    }
+
+    const { data: existing } = await supabaseAdmin
+      .from("team_members")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existing) {
+      return new Response("User already in team", { status: 400 });
+    }
+
+    const { error: insertError } = await supabaseAdmin
+      .from("team_members")
+      .insert({
+        user_id: user.id,
+        team_id: team.id,
+        role: "member",
+      });
+
+    if (insertError) {
+      return new Response(insertError.message, { status: 500 });
+    }
+
+    return new Response(JSON.stringify(team), {
+      headers: { "Content-Type": "application/json" },
     });
-  }),
-};
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/join-team' \
-    --header 'apiKey: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' \
-    --data '{"name":"Functions"}'
-
-*/
+  } catch (e) {
+    return new Response(String(e), { status: 500 });
+  }
+});
