@@ -43,7 +43,7 @@ export function CreateTeam() {
         token,
       });
 
-      await useAuthStore.getState().loadTeam(userId);
+      await useAuthStore.getState().loadUserContext(userId);
 
       reset();
     } catch (error) {

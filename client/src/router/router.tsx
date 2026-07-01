@@ -13,7 +13,7 @@ import { DashboardLayout } from "../components/custom/dashboard/DashboardLayout"
 import ProductsPage from "../pages/ProductsPage";
 import MembersPage from "../pages/MembersPage";
 import SettingsPage from "../pages/SettingsPage";
-import ProfilePage from "../pages/ProfilePage";
+import { ProfilePage } from "../pages/ProfilePage";
 
 export function Router() {
   return (

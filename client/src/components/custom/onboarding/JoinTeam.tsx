@@ -40,7 +40,7 @@ export function JoinTeam() {
 
       await teamService.joinTeam({ inviteCode: data.code, token });
 
-      await useAuthStore.getState().loadTeam(userId);
+      await useAuthStore.getState().loadUserContext(userId);
 
       reset();
     } catch (error) {

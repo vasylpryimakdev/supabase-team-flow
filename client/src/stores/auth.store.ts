@@ -1,92 +1,118 @@
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import type { Subscription } from "@supabase/supabase-js";
+import { authService } from "../services/auth.service";
 import { teamService } from "../services/team.service";
+import type { Profile } from "../types/profile.type";
+import type { Team } from "../types/team.type";
+import { handleError } from "../shared/errors/handleError";
 
-type User = {
-  id: string;
-  email: string | null;
-};
-
-type Team = {
-  id: string;
-  name: string;
-  invite_code: string;
-  role: string;
-};
-
+type User = { id: string; email: string | null };
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
-type AuthStore = {
+interface AuthStore {
   user: User | null;
+  profile: Profile | null;
   team: Team | null | undefined;
   status: AuthStatus;
   initialized: boolean;
-  isRecovery: boolean;
   isTeamLoading: boolean;
 
   initAuth: () => void;
-  setRecovery: (v: boolean) => void;
-  loadTeam: (userId: string) => Promise<void>;
-};
+  loadUserContext: (userId: string) => Promise<void>;
+  signOut: () => Promise<void>;
+
+  updateProfileName: (name: string) => Promise<void>;
+  updateAvatar: (avatarUrl: string) => Promise<void>;
+}
 
 let subscription: Subscription | null = null;
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
+  profile: null,
   team: undefined,
   status: "loading",
   initialized: false,
-  isRecovery: false,
   isTeamLoading: false,
 
-  setRecovery: (v) => set({ isRecovery: v }),
-
-  loadTeam: async (userId: string) => {
+  loadUserContext: async (userId: string) => {
     set({ isTeamLoading: true });
     try {
-      const teamData = await teamService.getTeam(userId);
-      set({ team: teamData });
+      const profile = await authService.getProfile(userId);
+      set({ profile });
+
+      if (profile?.team_id) {
+        const team = await teamService.getTeamById(profile.team_id);
+
+        set({ team });
+      } else {
+        set({ team: null });
+      }
     } catch (error) {
-      set({ team: null });
-      throw error;
+      handleError(error);
+      set({ team: null, profile: null });
     } finally {
       set({ isTeamLoading: false });
     }
   },
 
+  updateProfileName: async (name: string) => {
+    const { profile } = get();
+    if (!profile) return;
+
+    await supabase
+      .from("profiles")
+      .update({ name })
+      .eq("id", profile.id);
+
+    set({ profile: { ...profile, name } });
+  },
+
+  updateAvatar: async (avatarUrl: string) => {
+    const { profile } = get();
+    if (!profile) return;
+
+    await supabase
+      .from("profiles")
+      .update({ avatar_url: avatarUrl })
+      .eq("id", profile.id);
+
+    set({ profile: { ...profile, avatar_url: avatarUrl } });
+  },
+
   initAuth: () => {
     if (get().initialized) return;
-
     set({ initialized: true, status: "loading" });
 
-    const hash = window.location.hash || "";
-    const isRecovery = hash.includes("type=recovery");
-
-    set({ isRecovery });
-
     const init = async () => {
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
 
-      if (!session?.user) {
+        if (!session?.user) {
+          set({
+            user: null,
+            profile: null,
+            team: null,
+            status: "unauthenticated",
+          });
+          return;
+        }
+
+        set({
+          user: { id: session.user.id, email: session.user.email ?? null },
+          status: "authenticated",
+        });
+
+        await get().loadUserContext(session.user.id);
+      } catch {
         set({
           user: null,
+          profile: null,
           team: null,
           status: "unauthenticated",
         });
-        return;
       }
-
-      set({
-        user: {
-          id: session.user.id,
-          email: session.user.email ?? null,
-        },
-        status: "authenticated",
-      });
-
-      await get().loadTeam(session.user.id);
     };
 
     init();
@@ -94,45 +120,29 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (!subscription) {
       const { data } = supabase.auth.onAuthStateChange(
         async (event, session) => {
-          const user = session?.user
-            ? {
-              id: session.user.id,
-              email: session.user.email ?? null,
-            }
-            : null;
-
-          if (event === "PASSWORD_RECOVERY") {
-            set({
-              isRecovery: true,
-              user: null,
-              team: null,
-              status: "unauthenticated",
-            });
-            return;
-          }
-
           if (event === "SIGNED_OUT") {
             set({
               user: null,
+              profile: null,
               team: null,
               status: "unauthenticated",
             });
-            return;
-          }
-
-          if (event === "SIGNED_IN" && user) {
-            set({
-              user,
-              status: "authenticated",
-              team: undefined,
-            });
-
-            await get().loadTeam(user.id);
+          } else if (event === "SIGNED_IN" && session?.user) {
+            const user = {
+              id: session.user.id,
+              email: session.user.email ?? null,
+            };
+            set({ user, status: "authenticated" });
+            await get().loadUserContext(user.id);
           }
         },
       );
-
       subscription = data.subscription;
     }
+  },
+
+  signOut: async () => {
+    await supabase.auth.signOut();
+    set({ user: null, profile: null, team: null, status: "unauthenticated" });
   },
 }));

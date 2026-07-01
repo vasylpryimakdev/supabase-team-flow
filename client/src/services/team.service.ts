@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import type { Team } from "../types/team.type";
 import { api } from "./api";
 
 export const teamService = {
@@ -14,33 +15,14 @@ export const teamService = {
     return api.del("team", {}, data.token);
   },
 
-  getTeam: async (userId: string) => {
+  async getTeamById(teamId: string): Promise<Team | null> {
     const { data, error } = await supabase
-      .from("team_members")
-      .select(`
-        role,
-        teams (
-          id,
-          name,
-          invite_code
-        )
-      `)
-      .eq("user_id", userId)
+      .from("teams")
+      .select("id, name, invite_code")
+      .eq("id", teamId)
       .maybeSingle();
 
-    if (error) {
-      throw error;
-    }
-
-    if (!data) return null;
-
-    return {
-      role: data.role,
-      ...(data.teams as unknown as {
-        id: string;
-        name: string;
-        invite_code: string;
-      }),
-    };
+    if (error) throw error;
+    return data;
   },
 };
