@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -9,50 +12,49 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
+import { Spinner } from "../components/custom/Spinner";
+import { handleError } from "../shared/errors/handleError";
+import { authService } from "../services/auth.service";
 
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-import { authService } from "../services/auth.service";
-import { Spinner } from "../components/custom/Spinner";
+import {
+  signInSchema,
+  type SignInForm,
+} from "../shared/schemas/sign-in.schema";
 
 export default function SignInPage() {
   const navigate = useNavigate();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInForm>({
+    resolver: zodResolver(signInSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setLoading(true);
-    setError("");
-
-    const { error } = await authService.signIn(email, password);
-
-    setLoading(false);
-
-    if (error) {
-      setError(error.message);
-      return;
+  const onSubmit = async (data: SignInForm) => {
+    try {
+      await authService.signIn(data.email, data.password);
+      navigate("/onboarding");
+    } catch (error) {
+      handleError(error);
     }
-
-    navigate("/onboarding");
   };
 
   const handleGoogleSignIn = async () => {
-    setError("");
-
-    const { error } = await authService.signInWithGoogle();
-
-    if (error) setError(error.message);
+    try {
+      await authService.signInWithGoogle();
+    } catch (error) {
+      handleError(error);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
       <Card className="w-full max-w-md backdrop-blur-xl bg-white/10 border border-white/10 shadow-2xl rounded-2xl p-4">
         <CardHeader className="mb-2">
           <CardTitle className="text-center text-3xl font-bold text-white">
@@ -61,51 +63,60 @@ export default function SignInPage() {
         </CardHeader>
 
         <CardContent>
-          <form noValidate onSubmit={handleSubmit} className="space-y-4">
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-10 pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-              />
+          <form
+            noValidate
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+          >
+            <div>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  {...register("email")}
+                  className="h-10 pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+              </div>
+              {errors.email && (
+                <p className="text-sm text-red-400 mt-1">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
-
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-10 pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-3 top-3 text-white/50 hover:text-white"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+            <div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  {...register("password")}
+                  className="h-10 pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-3 top-3 text-white/50 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-sm text-red-400 mt-1">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <Button
               className="h-10 w-full bg-white text-black hover:bg-white/90 transition"
               type="submit"
-              disabled={loading}
+              disabled={isSubmitting}
             >
-              {loading ? <Spinner /> : "Sign in"}
+              {isSubmitting ? <Spinner /> : "Sign in"}
             </Button>
-
-            {error && (
-              <span className="block text-sm text-red-400">{error}</span>
-            )}
 
             <Button
               type="button"

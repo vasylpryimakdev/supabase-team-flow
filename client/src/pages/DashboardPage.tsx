@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { LogOut, Menu, Settings, UserMinus, Users, X } from "lucide-react";
 import { Separator } from "../components/ui/separator";
+import { authService } from "../services/auth.service";
+import { teamService } from "../services/team.service";
+import { useNavigate } from "react-router-dom";
 
 const TEAM_MEMBERS = [
   { id: 1, name: "Олександр В.", avatar: "👨‍💻", color: "bg-blue-500/20" },
@@ -11,6 +14,40 @@ const TEAM_MEMBERS = [
 
 export function DashboardPage() {
   const [isOpen, setIsOpen] = useState(false);
+
+  const navigate = useNavigate();
+
+  const handleLeaveTeam = async () => {
+    try {
+      const { data } = await authService.getSession();
+      const token = data.session?.access_token;
+
+      if (!token) {
+        console.error("Токен не знайдено, перенаправлення на signin");
+        navigate("/auth/signin");
+        return;
+      }
+
+      // Виконуємо запит до бекенду
+      await teamService.leaveTeam({ token });
+      console.log("Успішно залишено команду");
+
+      // Спочатку закриваємо сайдбар, щоб не було графічних багів
+      setIsOpen(false);
+
+      // Робимо навігацію
+      navigate("/onboarding");
+    } catch (error) {
+      console.error("Помилка під час виходу з команди:", error);
+      // Навіть якщо бекенд повернув помилку, можливо варто все одно редіректнути користувача:
+      // navigate("/onboarding");
+    }
+  };
+
+  const handleLogout = async () => {
+    await authService.signOut();
+    navigate("/auth/signin");
+  };
 
   return (
     <div className="flex min-h-screen bg-background transition-all duration-300">
@@ -23,7 +60,7 @@ export function DashboardPage() {
           variant="ghost"
           size="icon"
           className={`absolute  top-3 transition-all duration-300 ${isOpen ? "right-4" : "left-1/2 -translate-x-1/2"}`}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setIsOpen((prev) => !prev)}
         >
           {isOpen ? <X className="size-7" /> : <Menu className="size-7" />}
         </Button>
@@ -95,6 +132,7 @@ export function DashboardPage() {
               isOpen ? "justify-start px-3" : "justify-center px-0"
             }`}
             title={!isOpen ? "Leave Team" : undefined}
+            onClick={handleLeaveTeam}
           >
             <UserMinus className="size-5 shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:text-amber-500" />
 
@@ -111,6 +149,7 @@ export function DashboardPage() {
               isOpen ? "justify-start px-3" : "justify-center px-0"
             }`}
             title={!isOpen ? "Logout" : undefined}
+            onClick={handleLogout}
           >
             <LogOut className="size-5 shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:text-rose-500" />
 

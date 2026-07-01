@@ -5,9 +5,11 @@ import { Spinner } from "./Spinner";
 const authRoutes = ["/auth/signin", "/auth/signup", "/auth/forgot-password"];
 
 export function RouteResolver({ children }: { children: React.ReactNode }) {
-  const { user, team, status, isRecovery } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const team = useAuthStore((s) => s.team);
+  const status = useAuthStore((s) => s.status);
+  const isRecovery = useAuthStore((s) => s.isRecovery);
   const { pathname } = useLocation();
-
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

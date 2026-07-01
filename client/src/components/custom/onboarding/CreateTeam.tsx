@@ -1,50 +1,63 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
-import { teamService } from "../../../services/team.service";
-import { supabase } from "../../../lib/supabase";
 import { Spinner } from "../Spinner";
 
+import { teamService } from "../../../services/team.service";
+import { authService } from "../../../services/auth.service";
+import { useAuthStore } from "../../../stores/auth.store";
+import { handleError } from "../../../shared/errors/handleError";
+
+const createTeamSchema = z.object({
+  teamName: z.string().trim().min(1, "Team name is required"),
+});
+
+type CreateTeamForm = z.infer<typeof createTeamSchema>;
+
 export function CreateTeam() {
-  const [teamName, setTeamName] = useState("");
-  const [loading, setLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm<CreateTeamForm>({
+    resolver: zodResolver(createTeamSchema),
+    mode: "onSubmit",
+  });
 
-  const isDisabled = !teamName.trim() || loading;
-
-  const handleCreate = async () => {
-    if (isDisabled) return;
-
-    setLoading(true);
-
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-
-    if (!token) return;
-
+  const onSubmit = async (data: CreateTeamForm) => {
     try {
+      const sessionData = await authService.getSession();
+      const token = sessionData.session?.access_token;
+      const userId = sessionData.session?.user.id;
+
+      if (!token || !userId) {
+        throw new Error("You must be logged in to create a team");
+      }
+
       await teamService.createTeam({
-        teamName,
+        teamName: data.teamName,
         token,
       });
 
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      await useAuthStore.getState().loadTeam(userId);
+
+      reset();
+    } catch (error) {
+      handleError(error);
     }
   };
 
   return (
-    <div className="space-y-2">
-      <Input
-        placeholder="Create team name"
-        value={teamName}
-        onChange={(e) => setTeamName(e.target.value)}
-      />
+    <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+      <Input placeholder="Create team name" {...register("teamName")} />
 
-      <Button disabled={isDisabled} onClick={handleCreate}>
-        {loading ? <Spinner /> : "Create team"}
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? <Spinner /> : "Create team"}
       </Button>
-    </div>
+    </form>
   );
 }

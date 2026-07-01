@@ -1,15 +1,19 @@
 import { supabase } from "../lib/supabase";
 
 export const authService = {
-  signIn: async (email: string, password: string) => {
-    return supabase.auth.signInWithPassword({
+  async signIn(email: string, password: string) {
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    if (error) throw error;
+
+    return data;
   },
 
-  signUp: async (email: string, password: string, name: string) => {
-    return supabase.auth.signUp({
+  async signUp(email: string, password: string, name: string) {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -18,38 +22,64 @@ export const authService = {
         },
       },
     });
+
+    if (error) throw error;
+
+    return data;
   },
 
-  signInWithGoogle: async () => {
-    return supabase.auth.signInWithOAuth({
+  async signInWithGoogle() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/`,
       },
     });
+
+    if (error) throw error;
+
+    return data;
   },
 
-  signOut: async () => {
-    return supabase.auth.signOut();
+  async signOut() {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) throw error;
   },
 
-  forgotPassword: async (email: string) => {
-    return supabase.auth.resetPasswordForEmail(email, {
+  async forgotPassword(email: string) {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
+
+    if (error) throw error;
+
+    return data;
   },
 
-  resetPassword: async (password: string) => {
-    return supabase.auth.updateUser({
+  async resetPassword(password: string) {
+    const { data, error } = await supabase.auth.updateUser({
       password,
     });
+
+    if (error) throw error;
+
+    return data;
   },
 
-  getSession: async () => {
-    return supabase.auth.getSession();
+  async getSession() {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) throw error;
+
+    return data;
   },
 
-  getUser: async () => {
-    return supabase.auth.getUser();
+  async getUser() {
+    const { data, error } = await supabase.auth.getUser();
+
+    if (error) throw error;
+
+    return data;
   },
 };

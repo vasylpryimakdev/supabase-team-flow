@@ -1,35 +1,53 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
+
 import { teamService } from "../../../services/team.service";
 import { authService } from "../../../services/auth.service";
+import { handleError } from "../../../shared/errors/handleError";
+import { Spinner } from "../Spinner";
+
+const joinTeamSchema = z.object({
+  code: z.string().trim().min(1, "Invite code is required"),
+});
+
+type JoinTeamForm = z.infer<typeof joinTeamSchema>;
 
 export function JoinTeam() {
-  const [code, setCode] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<JoinTeamForm>({
+    resolver: zodResolver(joinTeamSchema),
+    mode: "onSubmit",
+  });
 
-  const isDisabled = !code.trim();
+  const onSubmit = async (data: JoinTeamForm) => {
+    try {
+      const sessionData = await authService.getSession();
+      const token = sessionData.session?.access_token;
 
-  const handleJoin = async () => {
-    const { data } = await authService.getSession();
-    const token = data.session?.access_token;
+      if (!token) {
+        throw new Error("You must be logged in to join a team");
+      }
 
-    if (!token) return;
-    if (isDisabled) return;
-
-    await teamService.joinTeam({ inviteCode: code, token });
+      await teamService.joinTeam({ inviteCode: data.code, token });
+    } catch (error) {
+      handleError(error);
+    }
   };
 
   return (
-    <div className="space-y-2">
-      <Input
-        placeholder="Invite code"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-      />
+    <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+      <Input placeholder="Invite code" {...register("code")} />
 
-      <Button disabled={isDisabled} onClick={handleJoin}>
-        Join team
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? <Spinner /> : "Join team"}
       </Button>
-    </div>
+    </form>
   );
 }
