@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Spinner } from "../components/custom/Spinner";
+import { authService } from "../services/auth.service";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -17,9 +17,7 @@ export default function ForgotPasswordPage() {
     setError("");
     setMessage("");
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    const { error } = await authService.forgotPassword(email);
 
     setLoading(false);
 

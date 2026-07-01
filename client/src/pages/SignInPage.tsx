@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { Button } from "../components/ui/button";
-import { supabase } from "../lib/supabase";
 import {
   Card,
   CardContent,
@@ -12,6 +11,8 @@ import {
 import { Input } from "../components/ui/input";
 
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { authService } from "../services/auth.service";
+import { Spinner } from "../components/custom/Spinner";
 
 export default function SignInPage() {
   const navigate = useNavigate();
@@ -30,10 +31,7 @@ export default function SignInPage() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await authService.signIn(email, password);
 
     setLoading(false);
 
@@ -48,17 +46,13 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     setError("");
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
+    const { error } = await authService.signInWithGoogle();
 
-    if (error) {
-      setError(error.message);
-    }
+    if (error) setError(error.message);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+    <div className="min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-md backdrop-blur-xl bg-white/10 border border-white/10 shadow-2xl rounded-2xl p-4">
         <CardHeader className="mb-2">
           <CardTitle className="text-center text-3xl font-bold text-white">
@@ -106,7 +100,7 @@ export default function SignInPage() {
               type="submit"
               disabled={loading}
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? <Spinner /> : "Sign in"}
             </Button>
 
             {error && (

@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
 
 import {
   Card,
@@ -10,10 +8,10 @@ import {
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
+import { authService } from "../services/auth.service";
+import { Spinner } from "../components/custom/Spinner";
 
 export default function ResetPasswordPage() {
-  const navigate = useNavigate();
-
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -23,7 +21,7 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await authService.getSession();
 
       if (error || !data.session) {
         setError("Invalid or expired reset link");
@@ -37,7 +35,7 @@ export default function ResetPasswordPage() {
     checkSession();
   }, []);
 
-  const handleReset = async (e: React.FormEvent) => {
+  const handleReset = async (e: React.SubmitEvent) => {
     e.preventDefault();
 
     setError(null);
@@ -49,9 +47,7 @@ export default function ResetPasswordPage() {
 
     setSubmitting(true);
 
-    const { error } = await supabase.auth.updateUser({
-      password,
-    });
+    const { error } = await authService.resetPassword(password);
 
     setSubmitting(false);
 
@@ -66,14 +62,12 @@ export default function ResetPasswordPage() {
     }
 
     setSuccess(true);
-
-    navigate("/auth", { replace: true });
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Checking reset link...
+        <Spinner />
       </div>
     );
   }

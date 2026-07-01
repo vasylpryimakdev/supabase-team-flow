@@ -1,27 +1,36 @@
 import { useState } from "react";
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
+import { teamService } from "../../../services/team.service";
+import { supabase } from "../../../lib/supabase";
+import { Spinner } from "../Spinner";
 
-type Props = {
-  userName: string;
-};
-
-export function CreateTeam({ userName }: Props) {
+export function CreateTeam() {
   const [teamName, setTeamName] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const isDisabled = !userName.trim() || !teamName.trim();
+  const isDisabled = !teamName.trim() || loading;
 
   const handleCreate = async () => {
     if (isDisabled) return;
 
-    await fetch("/api/create-team", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    setLoading(true);
+
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+
+    if (!token) return;
+
+    try {
+      await teamService.createTeam({
         teamName,
-        userName,
-      }),
-    });
+        token,
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -33,7 +42,7 @@ export function CreateTeam({ userName }: Props) {
       />
 
       <Button disabled={isDisabled} onClick={handleCreate}>
-        Create team
+        {loading ? <Spinner /> : "Create team"}
       </Button>
     </div>
   );

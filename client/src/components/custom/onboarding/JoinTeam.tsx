@@ -2,14 +2,10 @@ import { useState } from "react";
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 
-type Props = {
-  userName: string;
-};
-
-export function JoinTeam({ userName }: Props) {
+export function JoinTeam() {
   const [code, setCode] = useState("");
 
-  const isDisabled = !userName.trim() || !code.trim();
+  const isDisabled = !code.trim();
 
   const handleJoin = async () => {
     if (isDisabled) return;
@@ -19,7 +15,6 @@ export function JoinTeam({ userName }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         code,
-        userName,
       }),
     });
   };
