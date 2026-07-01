@@ -3,13 +3,13 @@ import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import OnboardingPage from "../pages/OnboardingPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
-import Dashboard from "../components/custom/Dashboard";
 import { ProtectedRoute } from "../components/custom/ProtectedRoute";
 import { RouteResolver } from "../components/custom/RouteResolver";
 import { ErrorBoundary } from "../components/custom/ErrorBoundary";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
+import { DashboardPage } from "../pages/DashboardPage";
 
 export function Router() {
   return (
@@ -26,7 +26,7 @@ export function Router() {
 
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<OnboardingPage />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />
