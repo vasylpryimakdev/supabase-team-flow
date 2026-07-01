@@ -8,7 +8,7 @@ import {
   Users,
   X,
   Package,
-  User, // Додали іконку профілю
+  User,
 } from "lucide-react";
 import { Separator } from "../../ui/separator";
 import { authService } from "../../../services/auth.service";
@@ -57,7 +57,6 @@ export function DashboardLayout() {
           {isOpen ? <X className="size-7" /> : <Menu className="size-7" />}
         </Button>
 
-        {/* MY PRODUCTS */}
         <div className="px-2">
           <Button
             variant={isActive("/dashboard") ? "secondary" : "ghost"}
@@ -80,7 +79,6 @@ export function DashboardLayout() {
 
         <Separator />
 
-        {/* MEMBERS BLOCK */}
         <div className="flex flex-col gap-2 overflow-hidden px-2">
           <Button
             variant={isActive("/dashboard/members") ? "secondary" : "ghost"}
@@ -100,7 +98,6 @@ export function DashboardLayout() {
             )}
           </Button>
 
-          {/* TEAM MEMBERS LIST */}
           <div className="flex flex-col gap-1 w-full">
             {TEAM_MEMBERS.map((member) => (
               <div
@@ -127,11 +124,9 @@ export function DashboardLayout() {
           </div>
         </div>
 
-        {/* FOOTER ACTIONS */}
         <div className="mt-auto w-full flex flex-col gap-1.5 p-2">
           <Separator className="my-1" />
 
-          {/* MY PROFILE (НОВА КНОПКА) */}
           <Button
             variant={isActive("/dashboard/profile") ? "secondary" : "ghost"}
             disabled={isLoggingOut}
@@ -151,7 +146,6 @@ export function DashboardLayout() {
             )}
           </Button>
 
-          {/* TEAM SETTINGS */}
           <Button
             variant={isActive("/dashboard/settings") ? "secondary" : "ghost"}
             disabled={isLoggingOut}
@@ -171,7 +165,6 @@ export function DashboardLayout() {
             )}
           </Button>
 
-          {/* LOGOUT */}
           <Button
             variant="ghost"
             disabled={isLoggingOut}
