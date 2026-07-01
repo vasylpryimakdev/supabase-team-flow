@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../_shared/supabaseClient.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 function generateInviteCode(length = 6) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -30,6 +31,12 @@ async function generateUniqueInviteCode() {
 }
 
 export default Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: corsHeaders,
+    });
+  }
+
   try {
     if (req.method !== "POST") {
       return Response.json({ error: "Method not allowed" }, { status: 405 });

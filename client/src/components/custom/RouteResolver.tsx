@@ -43,7 +43,7 @@ export function RouteResolver({ children }: { children: React.ReactNode }) {
     return children;
   }
 
-  if (authRoutes.includes(pathname)) {
+  if (team && pathname === "/onboarding") {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -26,6 +26,7 @@ export function CreateTeam() {
         teamName,
         token,
       });
+
     } catch (e) {
       console.error(e);
     } finally {

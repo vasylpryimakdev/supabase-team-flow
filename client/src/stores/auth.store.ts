@@ -41,10 +41,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ team: undefined });
 
     const { data } = await supabase
-      .from("profiles")
+      .from("team_members")
       .select("team_id")
-      .eq("id", userId)
-      .single();
+      .eq("user_id", userId)
+      .maybeSingle();
 
     set({
       team: data?.team_id ? { id: data.team_id } : null,
@@ -57,7 +57,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ initialized: true, status: "loading" });
 
     const hash = window.location.hash || "";
-    const isRecovery = hash.includes("type=recovery")
+    const isRecovery = hash.includes("type=recovery");
 
     set({ isRecovery });
 
