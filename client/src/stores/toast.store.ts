@@ -31,7 +31,6 @@ export const useToastStore = create<ToastState>((set, get) => ({
       ],
     }));
 
-    // auto remove
     setTimeout(() => {
       get().removeToast(id);
     }, duration);

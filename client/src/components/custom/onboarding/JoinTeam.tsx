@@ -7,6 +7,7 @@ import { Button } from "../../ui/button";
 
 import { teamService } from "../../../services/team.service";
 import { authService } from "../../../services/auth.service";
+import { useAuthStore } from "../../../stores/auth.store";
 import { handleError } from "../../../shared/errors/handleError";
 import { Spinner } from "../Spinner";
 
@@ -20,6 +21,7 @@ export function JoinTeam() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { isSubmitting },
   } = useForm<JoinTeamForm>({
     resolver: zodResolver(joinTeamSchema),
@@ -30,12 +32,17 @@ export function JoinTeam() {
     try {
       const sessionData = await authService.getSession();
       const token = sessionData.session?.access_token;
+      const userId = sessionData.session?.user.id;
 
-      if (!token) {
+      if (!token || !userId) {
         throw new Error("You must be logged in to join a team");
       }
 
       await teamService.joinTeam({ inviteCode: data.code, token });
+
+      await useAuthStore.getState().loadTeam(userId);
+
+      reset();
     } catch (error) {
       handleError(error);
     }

@@ -10,6 +10,7 @@ export function RouteResolver({ children }: { children: React.ReactNode }) {
   const status = useAuthStore((s) => s.status);
   const isRecovery = useAuthStore((s) => s.isRecovery);
   const { pathname } = useLocation();
+
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -27,16 +28,16 @@ export function RouteResolver({ children }: { children: React.ReactNode }) {
     if (!authRoutes.includes(pathname)) {
       return <Navigate to="/auth/signin" replace />;
     }
-
     return children;
   }
 
-  if (team === undefined)
+  if (team === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Spinner />
       </div>
     );
+  }
 
   if (!team) {
     if (pathname !== "/onboarding") {
@@ -45,7 +46,7 @@ export function RouteResolver({ children }: { children: React.ReactNode }) {
     return children;
   }
 
-  if (team && pathname === "/onboarding") {
+  if (authRoutes.includes(pathname) || pathname === "/onboarding") {
     return <Navigate to="/dashboard" replace />;
   }
 
