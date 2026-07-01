@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
+import { teamService } from "../../../services/team.service";
+import { authService } from "../../../services/auth.service";
 
 export function JoinTeam() {
   const [code, setCode] = useState("");
@@ -8,15 +10,13 @@ export function JoinTeam() {
   const isDisabled = !code.trim();
 
   const handleJoin = async () => {
+    const { data } = await authService.getSession();
+    const token = data.session?.access_token;
+
+    if (!token) return;
     if (isDisabled) return;
 
-    await fetch("/api/join-team", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        code,
-      }),
-    });
+    await teamService.joinTeam({ inviteCode: code, token });
   };
 
   return (

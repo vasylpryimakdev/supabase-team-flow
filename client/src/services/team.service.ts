@@ -9,4 +9,17 @@ export const teamService = {
       teamName: data.teamName,
     }, data.token);
   },
+
+  joinTeam: (data: {
+    inviteCode: string;
+    token: string;
+  }) => {
+    return apiPost(
+      "join-team",
+      {
+        inviteCode: data.inviteCode,
+      },
+      data.token,
+    );
+  },
 };
