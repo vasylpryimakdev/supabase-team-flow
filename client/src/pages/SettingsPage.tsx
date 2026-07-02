@@ -5,13 +5,46 @@ import { teamService } from "../services/team.service";
 import { handleError } from "../shared/errors/handleError";
 import { useToastStore } from "../stores/toast.store";
 
+import {
+  Loader2,
+  Mail,
+  Trash2,
+  LogOut,
+  Save,
+  Check,
+  Clipboard,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Separator } from "../components/ui/separator";
+
 const SettingsPage = () => {
   const { profile } = useAuthStore();
   const { team, setTeam } = useTeamStore();
   const [newName, setNewName] = useState(team?.name || "");
   const [inviteEmail, setInviteEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const showToast = useToastStore.getState().showToast;
+  const showToast = useToastStore((s) => s.showToast);
+
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = () => {
+    if (!team?.invite_code) return;
+    navigator.clipboard.writeText(team.invite_code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  console.log(team);
 
   const isOwner = profile?.role === "owner";
 
@@ -19,8 +52,7 @@ const SettingsPage = () => {
     setLoading(true);
     try {
       await teamService.updateTeamName(newName);
-      
-      showToast("Team name updated!");
+      showToast("Team name updated successfully!");
     } catch (e) {
       handleError(e);
     } finally {
@@ -36,8 +68,8 @@ const SettingsPage = () => {
         email: inviteEmail,
         teamCode: team.invite_code,
       });
-
-      showToast("Team name updated!");
+      showToast("Invitation sent!");
+      setInviteEmail("");
     } catch (e) {
       handleError(e);
     } finally {
@@ -51,7 +83,6 @@ const SettingsPage = () => {
     try {
       if (action === "delete") await teamService.deleteTeam();
       else await teamService.leaveTeam();
-
       setTeam(null);
       window.location.href = "/";
     } catch (e) {
@@ -62,61 +93,105 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-8">
-      <h1 className="text-2xl font-bold">Team Settings</h1>
+    <div className="p-6 max-w-2xl mx-auto space-y-6">
+      <h1 className="text-3xl font-bold">Team Settings</h1>
 
-      <section className="p-4 border rounded">
-        <h2 className="text-lg font-semibold">Invite Member</h2>
-        <div className="flex gap-2 mt-2">
-          <input
-            type="email"
-            placeholder="Friend's email"
-            className="border p-2 flex-1"
-            onChange={(e) => setInviteEmail(e.target.value)}
-          />
-          <button
-            onClick={handleInvite}
-            disabled={loading}
-            className="bg-blue-500 text-white p-2"
-          >
-            Send Invite
-          </button>
-        </div>
-      </section>
+      <Card className="p-6">
+        <CardHeader className="mb-6">
+          <CardTitle>Invite Member</CardTitle>
+          <CardDescription>
+            Send an invitation to join your team.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid w-full gap-1.5">
+            <Label htmlFor="email">Email</Label>
+            <div className="flex gap-2">
+              <Input
+                id="email"
+                type="email"
+                placeholder="colleague@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+              <Button className="w-36" onClick={handleInvite} disabled={loading}>
+                {loading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Mail className="mr-2 h-4 w-4" />
+                )}
+                Send Invite
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="grid w-full gap-1.5">
+            <Label>Or share this code</Label>
+            <div className="flex gap-2">
+              <div className="px-3 py-2 border rounded bg-muted font-mono text-center flex items-center justify-center font-bold">
+                {team?.invite_code || "..."}
+              </div>
+              <Button
+                variant="outline"
+                className="w-10"
+                onClick={copyToClipboard}
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Clipboard className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {isOwner ? (
-        <section className="p-4 border border-red-200 rounded">
-          <h2 className="text-lg font-semibold text-red-600">Owner Actions</h2>
-          <div className="mt-2 space-y-2">
-            <input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="border p-2 w-full"
-            />
-            <button
-              onClick={handleUpdateName}
-              className="bg-green-500 text-white p-2 w-full"
-            >
-              Update Name
-            </button>
-            <button
+        <Card className="border-destructive p-6">
+          <CardHeader className="mb-6">
+            <CardTitle className="text-destructive">Owner Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-1.5">
+              <Label>Update Team Name</Label>
+              <div className="flex flex-col gap-2">
+                <Input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                />
+                <Button variant="outline" onClick={handleUpdateName}>
+                  <Save className="mr-2 h-4 w-4" /> Save
+                </Button>
+              </div>
+            </div>
+            <Separator />
+            <Button
+              variant="destructive"
+              className="w-full"
               onClick={() => handleLeaveOrDelete("delete")}
-              className="bg-red-600 text-white p-2 w-full"
             >
-              Delete Team
-            </button>
-          </div>
-        </section>
+              <Trash2 className="mr-2 h-4 w-4" /> Delete Team
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <section className="p-4 border rounded">
-          <h2 className="text-lg font-semibold">Leave Team</h2>
-          <button
-            onClick={() => handleLeaveOrDelete("leave")}
-            className="bg-gray-500 text-white p-2 w-full mt-2"
-          >
-            Leave Team
-          </button>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Danger Zone</CardTitle>
+          </CardHeader>
+          <CardFooter>
+            <Button
+              variant="ghost"
+              className="text-destructive w-full"
+              onClick={() => handleLeaveOrDelete("leave")}
+            >
+              <LogOut className="mr-2 h-4 w-4" /> Leave Team
+            </Button>
+          </CardFooter>
+        </Card>
       )}
     </div>
   );

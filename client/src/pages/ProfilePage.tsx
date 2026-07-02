@@ -17,12 +17,13 @@ import { Label } from "../components/ui/label";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
+import { useTeamStore } from "../stores/teamStore";
 
 export const ProfilePage = () => {
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
-  const team = useAuthStore((s) => s.team);
-  const isTeamLoading = useAuthStore((s) => s.isTeamLoading);
+  const team = useTeamStore((s) => s.team);
+  const isTeamLoading = useTeamStore((s) => s.isLoading);
   const loadTeamContext = useAuthStore((s) => s.loadUserContext);
   const updateProfileName = useAuthStore((s) => s.updateProfileName);
   const updateAvatar = useAuthStore((s) => s.updateAvatar);

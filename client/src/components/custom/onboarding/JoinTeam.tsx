@@ -38,7 +38,7 @@ export function JoinTeam() {
         throw new Error("You must be logged in to join a team");
       }
 
-      await teamService.joinTeam({ inviteCode: data.code, token });
+      await teamService.joinTeam(data.code);
 
       await useAuthStore.getState().loadUserContext(userId);
 
