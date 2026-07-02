@@ -15,6 +15,15 @@ export const teamService = {
     return api.del("team", {}, data.token);
   },
 
+  inviteMember: async (
+    data: { email: string; teamCode: string; token: string },
+  ) => {
+    return api.post("invite-member", {
+      email: data.email,
+      teamCode: data.teamCode,
+    }, data.token);
+  },
+
   async getTeamById(teamId: string): Promise<Team | null> {
     const { data, error } = await supabase
       .from("teams")
