@@ -3,6 +3,7 @@ import { useAuthStore } from "../stores/auth.store";
 import { useTeamStore } from "../stores/teamStore";
 import { teamService } from "../services/team.service";
 import { handleError } from "../shared/errors/handleError";
+import { useToastStore } from "../stores/toast.store";
 
 const SettingsPage = () => {
   const { profile } = useAuthStore();
@@ -10,6 +11,7 @@ const SettingsPage = () => {
   const [newName, setNewName] = useState(team?.name || "");
   const [inviteEmail, setInviteEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const showToast = useToastStore.getState().showToast;
 
   const isOwner = profile?.role === "owner";
 
@@ -17,7 +19,8 @@ const SettingsPage = () => {
     setLoading(true);
     try {
       await teamService.updateTeamName(newName);
-      alert("Team name updated!");
+      
+      showToast("Team name updated!");
     } catch (e) {
       handleError(e);
     } finally {
@@ -33,7 +36,8 @@ const SettingsPage = () => {
         email: inviteEmail,
         teamCode: team.invite_code,
       });
-      alert("Invitation sent!");
+
+      showToast("Team name updated!");
     } catch (e) {
       handleError(e);
     } finally {

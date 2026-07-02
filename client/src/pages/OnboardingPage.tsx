@@ -12,6 +12,7 @@ import { Button } from "../components/ui/button";
 import { teamService } from "../services/team.service";
 import { Spinner } from "../components/custom/Spinner";
 import { useAuthStore } from "../stores/auth.store";
+import { handleError } from "../shared/errors/handleError";
 
 type Mode = "create" | "join";
 
@@ -37,7 +38,7 @@ export default function OnboardingPage() {
         navigate("/dashboard", { replace: true });
       } catch (error) {
         console.error("Auto-join failed:", error);
-        alert("Failed to join the team automatically.");
+        handleError(error);
         navigate("/onboarding", { replace: true });
       } finally {
         setIsJoining(false);
