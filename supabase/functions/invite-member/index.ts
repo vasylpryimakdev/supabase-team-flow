@@ -20,13 +20,13 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Team App <noreply@yourdomain.com>",
+        from: "onboarding@resend.dev",
         to: [email],
         subject: "You've been invited to join a team!",
         html: `
           <h1>You've been invited!</h1>
           <p>You have been invited to join a team. Click the link below to accept the invitation:</p>
-          <a href="https://your-app.com/join?code=${teamCode}">Join the team</a>
+          <a href="http://localhost:5173/onboarding?code=${teamCode}">Join the team</a>
           <p>Or you can simply enter this code manually: <strong>${teamCode}</strong></p>
           <br>
           <p>Best regards,<br>The Team App Team</p>

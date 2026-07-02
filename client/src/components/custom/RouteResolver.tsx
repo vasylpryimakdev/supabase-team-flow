@@ -6,48 +6,42 @@ import { useTeamStore } from "../../stores/teamStore";
 const authRoutes = ["/auth/signin", "/auth/signup", "/auth/forgot-password"];
 
 export function RouteResolver({ children }: { children: React.ReactNode }) {
-  const user = useAuthStore((s) => s.user);
+  const { user, status, isRecovery } = useAuthStore();
   const team = useTeamStore((s) => s.team);
-  const status = useAuthStore((s) => s.status);
-  const isRecovery = useAuthStore((s) => s.isRecovery);
+  const teamLoading = useTeamStore((s) => s.isLoading);
   const { pathname } = useLocation();
 
-  if (status === "loading") {
+  if (status === "loading" || teamLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center">
         <Spinner />
       </div>
     );
   }
 
   if (isRecovery) {
-    if (pathname === "/reset-password") return children;
-    return <Navigate to="/reset-password" replace />;
-  }
-
-  if (!user) {
-    if (!authRoutes.includes(pathname)) {
-      return <Navigate to="/auth/signin" replace />;
-    }
-    return children;
-  }
-
-  if (team === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Spinner />
-      </div>
+    return pathname === "/reset-password" ? (
+      children
+    ) : (
+      <Navigate to="/reset-password" replace />
     );
   }
 
-  if (!team) {
-    if (pathname !== "/onboarding") {
-      return <Navigate to="/onboarding" replace />;
-    }
-    return children;
+  if (!user) {
+    const isAuthRoute = authRoutes.includes(pathname);
+    return isAuthRoute ? children : <Navigate to="/auth/signin" replace />;
   }
 
-  if (authRoutes.includes(pathname) || pathname === "/onboarding") {
+  if (!team) {
+    const isAllowed = pathname === "/onboarding";
+    return isAllowed ? children : <Navigate to="/onboarding" replace />;
+  }
+
+  if (
+    authRoutes.includes(pathname) ||
+    pathname === "/onboarding" ||
+    pathname.startsWith("/join")
+  ) {
     return <Navigate to="/dashboard" replace />;
   }
 

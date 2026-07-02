@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +19,6 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { authService } from "../services/auth.service";
 import { handleError } from "../shared/errors/handleError";
 
-// Проста схема валідації для Sign In
 const signInSchema = z.object({
   email: z.string().trim().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
@@ -28,7 +27,6 @@ const signInSchema = z.object({
 type SignInForm = z.infer<typeof signInSchema>;
 
 export default function SignInPage() {
-  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -44,7 +42,6 @@ export default function SignInPage() {
   const onSubmit = async (data: SignInForm) => {
     try {
       await authService.signIn(data.email, data.password);
-      navigate("/onboarding");
     } catch (error) {
       handleError(error);
     }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +23,6 @@ import {
 } from "../shared/schemas/sign-in.schema";
 
 export default function SignInPage() {
-  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -39,7 +38,6 @@ export default function SignInPage() {
   const onSubmit = async (data: SignInForm) => {
     try {
       await authService.signIn(data.email, data.password);
-      navigate("/onboarding");
     } catch (error) {
       handleError(error);
     }

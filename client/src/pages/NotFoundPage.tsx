@@ -10,7 +10,7 @@ export default function NotFoundPage() {
         Oops... the page you're looking for doesn't exist.
       </p>
 
-      <Link to="/signin">
+      <Link to="/auth/signin">
         <Button className="bg-white text-black hover:bg-white/90">
           Go to Sign In
         </Button>
