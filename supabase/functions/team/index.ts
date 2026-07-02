@@ -120,6 +120,68 @@ Deno.serve(async (req) => {
       return json({ team });
     }
 
+    if (method === "PATCH") {
+      if (profile.role !== "owner") {
+        return error("Only owner can update team", 403);
+      }
+      if (!profile.team_id) return error("No team found", 404);
+
+      const body = await req.json().catch(() => null);
+      const teamName = body?.teamName?.trim();
+      if (!teamName) return error("New team name is required");
+
+      const { error: updateError } = await supabaseAdmin
+        .from("teams")
+        .update({ name: teamName })
+        .eq("id", profile.team_id);
+
+      if (updateError) {
+        return error("Failed to update team: " + updateError.message, 500);
+      }
+      return json({ message: "Team updated successfully" });
+    }
+
+    if (method === "DELETE") {
+      const body = await req.json().catch(() => null);
+      const action = body?.action;
+
+      if (action === "delete") {
+        if (profile.role !== "owner") {
+          return error("Only owner can delete team", 403);
+        }
+        if (!profile.team_id) return error("No team found", 404);
+
+        const { error: delError } = await supabaseAdmin
+          .from("teams")
+          .delete()
+          .eq("id", profile.team_id);
+
+        if (delError) {
+          return error("Failed to delete team: " + delError.message, 500);
+        }
+        return json({ message: "Team deleted successfully" });
+      }
+
+      if (action === "leave") {
+        if (profile.role === "owner") {
+          return error("Owner cannot leave team, delete it instead", 400);
+        }
+        if (!profile.team_id) return error("Not in a team", 400);
+
+        const { error: leaveError } = await supabaseAdmin
+          .from("profiles")
+          .update({ team_id: null, role: null })
+          .eq("id", user.id);
+
+        if (leaveError) {
+          return error("Failed to leave team: " + leaveError.message, 500);
+        }
+        return json({ message: "Left team successfully" });
+      }
+
+      return error("Invalid delete action");
+    }
+
     return error("Method not allowed", 405);
   } catch (e) {
     console.error("Edge Function Error:", e);
