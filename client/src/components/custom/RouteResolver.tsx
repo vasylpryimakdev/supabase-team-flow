@@ -1,12 +1,13 @@
 import { useLocation, Navigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/auth.store";
 import { Spinner } from "./Spinner";
+import { useTeamStore } from "../../stores/teamStore";
 
 const authRoutes = ["/auth/signin", "/auth/signup", "/auth/forgot-password"];
 
 export function RouteResolver({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
-  const team = useAuthStore((s) => s.team);
+  const team = useTeamStore((s) => s.team);
   const status = useAuthStore((s) => s.status);
   const isRecovery = useAuthStore((s) => s.isRecovery);
   const { pathname } = useLocation();

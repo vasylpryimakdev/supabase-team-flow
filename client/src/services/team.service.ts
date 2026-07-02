@@ -3,25 +3,31 @@ import type { Team } from "../types/team.type";
 import { api } from "./api";
 
 export const teamService = {
-  createTeam: (data: { teamName: string; token: string }) => {
-    return api.post("team", { teamName: data.teamName }, data.token);
+  createTeam: (teamName: string) => {
+    return api.post("team", { teamName });
   },
 
-  joinTeam: (data: { inviteCode: string; token: string }) => {
-    return api.put("team", { inviteCode: data.inviteCode }, data.token);
+  joinTeam: (inviteCode: string) => {
+    return api.put("team", { inviteCode });
   },
 
-  leaveTeam: (data: { token: string }) => {
-    return api.del("team", {}, data.token);
+  leaveTeam: () => {
+    return api.del("team", { action: "leave" });
   },
 
-  inviteMember: async (
-    data: { email: string; teamCode: string; token: string },
-  ) => {
+  deleteTeam: () => {
+    return api.del("team", { action: "delete" });
+  },
+
+  updateTeamName: (teamName: string) => {
+    return api.patch("team", { teamName });
+  },
+
+  inviteMember: async (data: { email: string; teamCode: string }) => {
     return api.post("invite-member", {
       email: data.email,
       teamCode: data.teamCode,
-    }, data.token);
+    });
   },
 
   async getTeamById(teamId: string): Promise<Team | null> {

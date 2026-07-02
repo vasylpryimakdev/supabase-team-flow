@@ -1,11 +1,14 @@
+import { authService } from "./auth.service";
+
 const BASE_URL = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
 
 async function request<T>(
   path: string,
-  method: "GET" | "POST" | "PUT" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
   body?: unknown,
-  token?: string,
 ): Promise<T> {
+  const token = await authService.getToken();
+
   const res = await fetch(`${BASE_URL}/${path}`, {
     method,
     headers: {
@@ -25,15 +28,9 @@ async function request<T>(
 }
 
 export const api = {
-  post: <T>(path: string, body: unknown, token?: string) =>
-    request<T>(path, "POST", body, token),
-
-  put: <T>(path: string, body: unknown, token?: string) =>
-    request<T>(path, "PUT", body, token),
-
-  del: <T>(path: string, body: unknown, token?: string) =>
-    request<T>(path, "DELETE", body, token),
-
-  get: <T>(path: string, token?: string) =>
-    request<T>(path, "GET", undefined, token),
+  post: <T>(path: string, body: unknown) => request<T>(path, "POST", body),
+  put: <T>(path: string, body: unknown) => request<T>(path, "PUT", body),
+  patch: <T>(path: string, body: unknown) => request<T>(path, "PATCH", body),
+  del: <T>(path: string, body?: unknown) => request<T>(path, "DELETE", body),
+  get: <T>(path: string) => request<T>(path, "GET"),
 };

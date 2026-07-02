@@ -75,6 +75,11 @@ export const authService = {
     return data;
   },
 
+  async getToken(): Promise<string | null> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
+  },
+
   getUser: async () => {
     return supabase.auth.getUser();
   },
