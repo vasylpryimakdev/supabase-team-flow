@@ -137,7 +137,7 @@ const SettingsPage = () => {
                 />
                 <Button
                   variant="outline"
-                  className="w-40"
+                  className="w-36"
                   onClick={handleUpdateName}
                 >
                   <Save className="mr-2 size-4" /> Save
@@ -215,7 +215,7 @@ const SettingsPage = () => {
                     size={""}
                     className="w-full hover:bg-red-700"
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut className="mr-2 size-4" />
                     Leave Team
                   </AlertDialogAction>
                 </AlertDialogFooter>

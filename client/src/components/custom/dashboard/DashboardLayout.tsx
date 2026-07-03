@@ -6,6 +6,8 @@ import { Separator } from "../../ui/separator";
 import { authService } from "../../../services/auth.service";
 import { handleError } from "../../../shared/errors/handleError";
 import { Spinner } from "../common/Spinner";
+import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
+import { useTeamStore } from "../../../stores/teamStore";
 
 const TEAM_MEMBERS = [
   { id: 1, name: "Олександр В.", avatar: "👨‍💻", color: "bg-blue-500/20" },
@@ -16,6 +18,7 @@ const TEAM_MEMBERS = [
 export function DashboardLayout() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const team = useTeamStore((s) => s.team);
 
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -181,12 +184,37 @@ export function DashboardLayout() {
       </aside>
 
       <main
-        className={`flex-1 p-6 pt-20 transition-all duration-300
-          ${isOpen ? "pl-[272px]" : "pl-[88px]"}
-        `}
+        className={`flex-1 p-6 transition-all duration-300 ${
+          isOpen ? "pl-[272px]" : "pl-[88px]"
+        }`}
       >
-        <div className="bg-card border rounded-xl p-6 h-full shadow-sm">
-          <Outlet />
+        <div className="flex flex-col h-full gap-6">
+          <header className="flex items-center justify-between bg-card border rounded-xl px-4 py-3 shadow-sm gap-4">
+            <div className="flex items-center w-[120px]">
+              <Avatar className="size-9 border">
+                <AvatarImage src={team?.avatar_url || ""} />
+                <AvatarFallback className="bg-primary/10">
+                  <Users className="size-4 text-primary" />
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
+            <div className="flex flex-col items-center flex-1 min-w-0">
+              <h1 className="text-lg font-bold truncate max-w-full">
+                {team?.name || "My Team"}
+              </h1>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                Workspace
+              </span>
+            </div>
+
+            <div className="w-[120px] flex justify-end">
+            </div>
+          </header>
+
+          <div className="bg-card border rounded-xl p-6 flex-1 shadow-sm">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>
