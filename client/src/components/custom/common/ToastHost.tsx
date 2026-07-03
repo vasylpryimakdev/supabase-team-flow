@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { useToastStore } from "../../stores/toast.store";
+import { useToastStore } from "../../../stores/toast.store";
 
 export function ToastHost() {
   const { toasts, removeToast } = useToastStore();

@@ -4,7 +4,7 @@ import { Copy, Check, UploadCloud, Shield, Users, User } from "lucide-react";
 import { useAuthStore } from "../stores/auth.store";
 import { handleError } from "../shared/errors/handleError";
 import { storageService } from "../services/storage.service";
-import { Spinner } from "../components/custom/Spinner";
+import { Spinner } from "../components/custom/common/Spinner";
 import {
   Card,
   CardContent,

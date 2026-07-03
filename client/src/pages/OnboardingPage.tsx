@@ -10,7 +10,7 @@ import { CreateTeam } from "../components/custom/onboarding/CreateTeam";
 import { JoinTeam } from "../components/custom/onboarding/JoinTeam";
 import { Button } from "../components/ui/button";
 import { teamService } from "../services/team.service";
-import { Spinner } from "../components/custom/Spinner";
+import { Spinner } from "../components/custom/common/Spinner";
 import { useAuthStore } from "../stores/auth.store";
 import { handleError } from "../shared/errors/handleError";
 
@@ -69,7 +69,7 @@ export default function OnboardingPage() {
           <div className="flex gap-2">
             <Button
               onClick={() => setMode("create")}
-              variant={mode === "create" ? "default" : "outline"}
+              variant={mode === "create" ? "outline" : "default"}
               className="flex-1 text-sm"
             >
               Create team
@@ -77,7 +77,7 @@ export default function OnboardingPage() {
 
             <Button
               onClick={() => setMode("join")}
-              variant={mode === "join" ? "default" : "outline"}
+              variant={mode === "join" ? "outline" : "default"}
               className="flex-1 text-sm"
             >
               Join team

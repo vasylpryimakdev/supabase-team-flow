@@ -3,9 +3,6 @@ import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import OnboardingPage from "../pages/OnboardingPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
-import { ProtectedRoute } from "../components/custom/ProtectedRoute";
-import { RouteResolver } from "../components/custom/RouteResolver";
-import { ErrorBoundary } from "../components/custom/ErrorBoundary";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
@@ -14,6 +11,9 @@ import ProductsPage from "../pages/ProductsPage";
 import MembersPage from "../pages/MembersPage";
 import SettingsPage from "../pages/SettingsPage";
 import { ProfilePage } from "../pages/ProfilePage";
+import { ErrorBoundary } from "../components/custom/common/ErrorBoundary";
+import { ProtectedRoute } from "../components/custom/common/ProtectedRoute";
+import { RouteResolver } from "../components/custom/common/RouteResolver";
 
 export function Router() {
   return (

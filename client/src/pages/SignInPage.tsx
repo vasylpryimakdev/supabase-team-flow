@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Spinner } from "../components/custom/Spinner";
+import { Spinner } from "../components/custom/common/Spinner";
 import { handleError } from "../shared/errors/handleError";
 import { authService } from "../services/auth.service";
 

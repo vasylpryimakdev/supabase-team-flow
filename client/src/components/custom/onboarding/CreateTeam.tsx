@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
-import { Spinner } from "../Spinner";
+import { Spinner } from "../common/Spinner";
 
 import { teamService } from "../../../services/team.service";
 import { authService } from "../../../services/auth.service";

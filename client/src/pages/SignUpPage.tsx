@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Spinner } from "../components/custom/Spinner";
+import { Spinner } from "../components/custom/common/Spinner";
 
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { authService } from "../services/auth.service";

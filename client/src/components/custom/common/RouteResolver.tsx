@@ -1,7 +1,7 @@
 import { useLocation, Navigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/auth.store";
+import { useAuthStore } from "../../../stores/auth.store";
+import { useTeamStore } from "../../../stores/teamStore";
 import { Spinner } from "./Spinner";
-import { useTeamStore } from "../../stores/teamStore";
 
 const authRoutes = ["/auth/signin", "/auth/signup", "/auth/forgot-password"];
 

@@ -9,7 +9,7 @@ import { teamService } from "../../../services/team.service";
 import { authService } from "../../../services/auth.service";
 import { useAuthStore } from "../../../stores/auth.store";
 import { handleError } from "../../../shared/errors/handleError";
-import { Spinner } from "../Spinner";
+import { Spinner } from "../common/Spinner";
 
 const joinTeamSchema = z.object({
   code: z.string().trim().min(1, "Invite code is required"),

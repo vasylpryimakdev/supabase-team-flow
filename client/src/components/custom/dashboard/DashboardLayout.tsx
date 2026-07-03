@@ -1,19 +1,11 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../../ui/button";
-import {
-  LogOut,
-  Menu,
-  Settings,
-  Users,
-  X,
-  Package,
-  User,
-} from "lucide-react";
+import { LogOut, Menu, Settings, Users, X, Package, User } from "lucide-react";
 import { Separator } from "../../ui/separator";
 import { authService } from "../../../services/auth.service";
 import { handleError } from "../../../shared/errors/handleError";
-import { Spinner } from "../Spinner";
+import { Spinner } from "../common/Spinner";
 
 const TEAM_MEMBERS = [
   { id: 1, name: "Олександр В.", avatar: "👨‍💻", color: "bg-blue-500/20" },

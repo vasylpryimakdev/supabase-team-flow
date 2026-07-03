@@ -1,23 +1,14 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useAuthStore } from "../stores/auth.store";
 import { useTeamStore } from "../stores/teamStore";
 import { teamService } from "../services/team.service";
 import { handleError } from "../shared/errors/handleError";
 import { useToastStore } from "../stores/toast.store";
 
-import {
-  Loader2,
-  Mail,
-  Trash2,
-  LogOut,
-  Save,
-  Check,
-  Clipboard,
-} from "lucide-react";
+import { Trash2, LogOut, Save } from "lucide-react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -27,25 +18,27 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Separator } from "../components/ui/separator";
 import { storageService } from "../services/storage.service";
-import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { AvatarUploader } from "../components/custom/common/AvatarUploader";
+import { InviteSection } from "../components/custom/common/InviteSection";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../components/ui/alert-dialog";
 
 const SettingsPage = () => {
   const { profile } = useAuthStore();
   const { team, setTeam } = useTeamStore();
   const [newName, setNewName] = useState(team?.name || "");
-  const [inviteEmail, setInviteEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const showToast = useToastStore((s) => s.showToast);
   const user = useAuthStore((s) => s.user);
-
-  const [copied, setCopied] = useState(false);
-
-  const copyToClipboard = () => {
-    if (!team?.invite_code) return;
-    navigator.clipboard.writeText(team.invite_code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const isOwner = profile?.role === "owner";
 
@@ -65,25 +58,7 @@ const SettingsPage = () => {
     }
   };
 
-  const handleInvite = async () => {
-    if (!team) return;
-    setLoading(true);
-    try {
-      await teamService.inviteMember({
-        email: inviteEmail,
-        teamCode: team.invite_code,
-      });
-      showToast("Invitation sent!");
-      setInviteEmail("");
-    } catch (e) {
-      handleError(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteTeam = async () => {
-    if (!confirm(`Are you sure you want to delete the team?`)) return;
     setLoading(true);
 
     try {
@@ -97,7 +72,6 @@ const SettingsPage = () => {
   };
 
   const handleLeaveTeam = async () => {
-    if (!confirm(`Are you sure you want to leave the team?`)) return;
     setLoading(true);
 
     if (!user) {
@@ -115,8 +89,6 @@ const SettingsPage = () => {
       setLoading(false);
     }
   };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,62 +111,7 @@ const SettingsPage = () => {
     <div className="p-6 max-w-2xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold">Team Settings</h1>
 
-      <Card className="p-6">
-        <CardHeader className="mb-6">
-          <CardTitle>Invite Member</CardTitle>
-          <CardDescription>
-            Send an invitation to join your team.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid w-full gap-1.5">
-            <Label htmlFor="email">Email</Label>
-            <div className="flex gap-2">
-              <Input
-                id="email"
-                type="email"
-                placeholder="colleague@example.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-              />
-              <Button
-                className="w-36"
-                onClick={handleInvite}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <Mail className="mr-2 h-4 w-4" />
-                )}
-                Send Invite
-              </Button>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="grid w-full gap-1.5">
-            <Label>Or share this code</Label>
-            <div className="flex gap-2">
-              <div className="px-3 py-2 border rounded bg-muted font-mono text-center flex items-center justify-center font-bold">
-                {team?.invite_code || "..."}
-              </div>
-              <Button
-                variant="outline"
-                className="w-10"
-                onClick={copyToClipboard}
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <Clipboard className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <InviteSection team={team} />
 
       {isOwner ? (
         <Card className="border-destructive p-6">
@@ -202,69 +119,108 @@ const SettingsPage = () => {
             <CardTitle className="text-destructive">Owner Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Card className="p-6">
-              <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={team?.avatar_url || ""} />
-                  <AvatarFallback>
-                    {team?.name.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold">Team Avatar</h2>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleAvatarChange}
-                    className="hidden"
-                    accept="image/*"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={loading}
-                  >
-                    Change Avatar
-                  </Button>
-                </div>
-              </div>
-            </Card>
+            <AvatarUploader
+              url={team?.avatar_url || ""}
+              onUpload={handleAvatarChange}
+              loading={loading}
+              title="Team Avatar"
+              description={
+                "Upload a high-quality image to represent your team."
+              }
+            />
             <div className="grid gap-1.5">
               <Label>Update Team Name</Label>
-              <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
                 <Input
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                 />
-                <Button variant="outline" onClick={handleUpdateName}>
-                  <Save className="mr-2 h-4 w-4" /> Save
+                <Button
+                  variant="outline"
+                  className="w-40"
+                  onClick={handleUpdateName}
+                >
+                  <Save className="mr-2 size-4" /> Save
                 </Button>
               </div>
             </div>
             <Separator />
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={handleDeleteTeam}
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> Delete Team
-            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="w-full transition-all duration-200 hover:bg-red-700"
+                >
+                  <Trash2 className="mr-2 size-4" />
+                  Delete Team
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    your team and remove all associated data from our servers.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel variant="outline" size="default">
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteTeam}
+                    variant="destructive"
+                    size="default"
+                    className="w-full hover:bg-red-700"
+                  >
+                    <Trash2 className="mr-2 size-4" />
+                    Delete Team
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
       ) : (
         <Card>
-          <CardHeader>
+          <CardHeader className="p-4">
             <CardTitle>Danger Zone</CardTitle>
           </CardHeader>
           <CardFooter>
-            <Button
-              variant="ghost"
-              className="text-destructive w-full"
-              onClick={handleLeaveTeam}
-            >
-              <LogOut className="mr-2 h-4 w-4" /> Leave Team
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="w-full transition-all duration-200 hover:bg-red-700"
+                >
+                  Leave Team
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. You will be removed from the
+                    team and lose access to team resources.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel variant="outline" size={""}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleLeaveTeam}
+                    variant="destructive"
+                    size={""}
+                    className="w-full hover:bg-red-700"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Leave Team
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardFooter>
         </Card>
       )}
