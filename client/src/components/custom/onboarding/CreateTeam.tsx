@@ -38,10 +38,7 @@ export function CreateTeam() {
         throw new Error("You must be logged in to create a team");
       }
 
-      await teamService.createTeam({
-        teamName: data.teamName,
-        token,
-      });
+      await teamService.createTeam(data.teamName);
 
       await useAuthStore.getState().loadUserContext(userId);
 

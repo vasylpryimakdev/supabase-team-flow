@@ -1,28 +1,31 @@
 import { supabase } from "../lib/supabase";
+import { handleError } from "../shared/errors/handleError";
+import { teamService } from "./team.service";
 
 export const storageService = {
   async uploadAvatar(userId: string, file: File): Promise<string> {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("avatar_path")
+      .eq("id", userId)
+      .single();
+
     const fileExt = file.name.split(".").pop();
-    const newFileName = `${Date.now()}.${fileExt}`;
-    const newFilePath = `${userId}/${newFileName}`;
+    const newFilePath = `${userId}/${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(newFilePath, file, { upsert: true });
+      .upload(newFilePath, file);
 
     if (uploadError) throw uploadError;
 
-    const { data: files, error: listError } = await supabase.storage
-      .from("avatars")
-      .list(userId);
+    await supabase
+      .from("profiles")
+      .update({ avatar_path: newFilePath })
+      .eq("id", userId);
 
-    if (!listError && files) {
-      const oldFiles = files.filter((f) => f.name !== newFileName);
-
-      if (oldFiles.length > 0) {
-        const pathsToRemove = oldFiles.map((f) => `${userId}/${f.name}`);
-        await supabase.storage.from("avatars").remove(pathsToRemove);
-      }
+    if (profile?.avatar_path) {
+      await supabase.storage.from("avatars").remove([profile.avatar_path]);
     }
 
     const { data: { publicUrl } } = supabase.storage
@@ -33,26 +36,32 @@ export const storageService = {
   },
 
   async uploadTeamAvatar(teamId: string, file: File): Promise<string> {
+    const { data: team, error: fetchError } = await supabase
+      .from("teams")
+      .select("avatar_path")
+      .eq("id", teamId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
     const fileExt = file.name.split(".").pop();
-    const newFileName = `${Date.now()}.${fileExt}`;
-    const newFilePath = `${teamId}/${newFileName}`;
+    const newFilePath = `${teamId}/${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from("team-avatars")
-      .upload(newFilePath, file, { upsert: true });
+      .upload(newFilePath, file);
 
     if (uploadError) throw uploadError;
 
-    const { data: files, error: listError } = await supabase.storage
-      .from("team-avatars")
-      .list(teamId);
+    await teamService.updateTeam(teamId, { avatar_path: newFilePath });
 
-    if (!listError && files) {
-      const oldFiles = files.filter((f) => f.name !== newFileName);
+    if (team?.avatar_path) {
+      const { error: removeError } = await supabase.storage
+        .from("team-avatars")
+        .remove([team.avatar_path]);
 
-      if (oldFiles.length > 0) {
-        const pathsToRemove = oldFiles.map((f) => `${teamId}/${f.name}`);
-        await supabase.storage.from("team-avatars").remove(pathsToRemove);
+      if (removeError) {
+        handleError(removeError);
       }
     }
 

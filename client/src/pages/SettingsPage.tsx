@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuthStore } from "../stores/auth.store";
 import { useTeamStore } from "../stores/teamStore";
 import { teamService } from "../services/team.service";
@@ -26,6 +26,8 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Separator } from "../components/ui/separator";
+import { storageService } from "../services/storage.service";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 
 const SettingsPage = () => {
   const { profile } = useAuthStore();
@@ -34,6 +36,7 @@ const SettingsPage = () => {
   const [inviteEmail, setInviteEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const showToast = useToastStore((s) => s.showToast);
+  const user = useAuthStore((s) => s.user);
 
   const [copied, setCopied] = useState(false);
 
@@ -44,14 +47,16 @@ const SettingsPage = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  console.log(team);
-
   const isOwner = profile?.role === "owner";
 
   const handleUpdateName = async () => {
+    if (!team?.id) {
+      return;
+    }
+
     setLoading(true);
     try {
-      await teamService.updateTeamName(newName);
+      await teamService.updateTeam(team?.id, { name: newName });
       showToast("Team name updated successfully!");
     } catch (e) {
       handleError(e);
@@ -77,14 +82,52 @@ const SettingsPage = () => {
     }
   };
 
-  const handleLeaveOrDelete = async (action: "leave" | "delete") => {
-    if (!confirm(`Are you sure you want to ${action} the team?`)) return;
+  const handleDeleteTeam = async () => {
+    if (!confirm(`Are you sure you want to delete the team?`)) return;
+    setLoading(true);
+
+    try {
+      await teamService.deleteTeam();
+      setTeam(null);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLeaveTeam = async () => {
+    if (!confirm(`Are you sure you want to leave the team?`)) return;
+    setLoading(true);
+
+    if (!user) {
+      showToast("You must be logged in to leave a team.");
+
+      return;
+    }
+
+    try {
+      await teamService.leaveTeam(user.id);
+      setTeam(null);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !team) return;
+
     setLoading(true);
     try {
-      if (action === "delete") await teamService.deleteTeam();
-      else await teamService.leaveTeam();
-      setTeam(null);
-      window.location.href = "/";
+      const newUrl = await storageService.uploadTeamAvatar(team.id, file);
+
+      setTeam({ ...team, avatar_url: newUrl });
+      showToast("Team avatar updated!");
     } catch (e) {
       handleError(e);
     } finally {
@@ -114,7 +157,11 @@ const SettingsPage = () => {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
               />
-              <Button className="w-36" onClick={handleInvite} disabled={loading}>
+              <Button
+                className="w-36"
+                onClick={handleInvite}
+                disabled={loading}
+              >
                 {loading ? (
                   <Loader2 className="animate-spin" />
                 ) : (
@@ -155,6 +202,34 @@ const SettingsPage = () => {
             <CardTitle className="text-destructive">Owner Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <Card className="p-6">
+              <div className="flex items-center gap-6">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={team?.avatar_url || ""} />
+                  <AvatarFallback>
+                    {team?.name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold">Team Avatar</h2>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                    accept="image/*"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading}
+                  >
+                    Change Avatar
+                  </Button>
+                </div>
+              </div>
+            </Card>
             <div className="grid gap-1.5">
               <Label>Update Team Name</Label>
               <div className="flex flex-col gap-2">
@@ -171,7 +246,7 @@ const SettingsPage = () => {
             <Button
               variant="destructive"
               className="w-full"
-              onClick={() => handleLeaveOrDelete("delete")}
+              onClick={handleDeleteTeam}
             >
               <Trash2 className="mr-2 h-4 w-4" /> Delete Team
             </Button>
@@ -186,7 +261,7 @@ const SettingsPage = () => {
             <Button
               variant="ghost"
               className="text-destructive w-full"
-              onClick={() => handleLeaveOrDelete("leave")}
+              onClick={handleLeaveTeam}
             >
               <LogOut className="mr-2 h-4 w-4" /> Leave Team
             </Button>
