@@ -213,7 +213,7 @@ const SettingsPage = () => {
                     onClick={handleLeaveTeam}
                     variant="destructive"
                     size={""}
-                    className="w-full hover:bg-red-700"
+                    className=" hover:bg-red-700"
                   >
                     <LogOut className="mr-2 size-4" />
                     Leave Team

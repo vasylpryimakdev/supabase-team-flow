@@ -3,7 +3,12 @@ import { useAuthStore } from "../../../stores/auth.store";
 import { useTeamStore } from "../../../stores/teamStore";
 import { Spinner } from "./Spinner";
 
-const authRoutes = ["/auth/signin", "/auth/signup", "/auth/forgot-password"];
+const authRoutes = [
+  "/auth/signin",
+  "/auth/signup",
+  "/auth/forgot-password",
+  "/reset-password",
+];
 
 export function RouteResolver({ children }: { children: React.ReactNode }) {
   const { user, status, isRecovery } = useAuthStore();
@@ -37,11 +42,7 @@ export function RouteResolver({ children }: { children: React.ReactNode }) {
     return isAllowed ? children : <Navigate to="/onboarding" replace />;
   }
 
-  if (
-    authRoutes.includes(pathname) ||
-    pathname === "/onboarding" ||
-    pathname.startsWith("/join")
-  ) {
+  if (authRoutes.includes(pathname)) {
     return <Navigate to="/dashboard" replace />;
   }
 

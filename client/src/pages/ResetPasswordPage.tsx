@@ -18,6 +18,7 @@ import { authService } from "../services/auth.service";
 import { handleError } from "../shared/errors/handleError";
 
 import { Eye, EyeOff, Lock } from "lucide-react";
+import { useAuthStore } from "../stores/auth.store";
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -68,9 +69,10 @@ export default function ResetPasswordPage() {
       await authService.resetPassword(data.password);
 
       setSuccess(true);
+      useAuthStore.getState().setRecovery(false);
 
       setTimeout(() => {
-        navigate("/auth/signin");
+        navigate("/onboarding", { replace: true });
       }, 3000);
     } catch (error) {
       handleError(error);
