@@ -71,4 +71,32 @@ export const storageService = {
 
     return publicUrl;
   },
+
+  async uploadProductImage(productId: string, file: File): Promise<string> {
+    const { data: product } = await supabase
+      .from("products")
+      .select("image_path")
+      .eq("id", productId)
+      .single();
+
+    const fileExt = file.name.split(".").pop();
+    const newFilePath = `${productId}/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("products")
+      .upload(newFilePath, file);
+      
+    if (uploadError) throw uploadError;
+
+    await supabase
+      .from("products")
+      .update({ image_path: newFilePath })
+      .eq("id", productId);
+
+    if (product?.image_path) {
+      await supabase.storage.from("products").remove([product.image_path]);
+    }
+
+    return newFilePath;
+  },
 };

@@ -1,28 +1,59 @@
 import { useState } from "react";
 import { useProducts } from "../hooks/useProducts";
 import { Input } from "../components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
 import { Button } from "../components/ui/button";
-import type { Product } from "../services/product.service";
+import { Spinner } from "../components/custom/common/Spinner";
+
+import { Badge } from "../components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
+import { ProductForm } from "../components/custom/products/ProductForm";
 
 const ProductsPage = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const { products, isLoading, remove } = useProducts({ page, status, search });
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">Products</h1>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Products</h1>
+          <p className="text-muted-foreground">
+            Create, edit and manage your team's products.
+          </p>
+        </div>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogTrigger asChild>
+            <Button>+ New product</Button>
+          </DialogTrigger>
+          <DialogContent className="bg-zinc-900 border-zinc-800 backdrop-blur-3xl opacity-100 p-6 border shadow-xl">
+            <DialogHeader>
+              <DialogTitle>Create New Product</DialogTitle>
+            </DialogHeader>
+            <ProductForm />
+          </DialogContent>
+        </Dialog>
+      </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 items-center">
         <Input
           placeholder="Search products..."
           value={search}
@@ -30,69 +61,91 @@ const ProductsPage = () => {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="max-w-xs"
+          className="max-w-sm"
         />
-        <Select
+        <Tabs
           value={status}
           onValueChange={(v) => {
             setStatus(v);
             setPage(1);
           }}
+          className="w-auto"
         >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="Draft">Draft</SelectItem>
-            <SelectItem value="Active">Active</SelectItem>
-            <SelectItem value="Deleted">Deleted</SelectItem>
-          </SelectContent>
-        </Select>
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="Draft">Draft</TabsTrigger>
+            <TabsTrigger value="Active">Active</TabsTrigger>
+            <TabsTrigger value="Deleted">Deleted</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : (
-        <table className="w-full border-collapse border">
-          <thead>
-            <tr>
-              <th className="p-2 border">Title</th>
-              <th className="p-2 border">Status</th>
-              <th className="p-2 border">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products?.map((p: Product) => (
-              <tr key={p.id}>
-                <td className="p-2 border">{p.title}</td>
-                <td className="p-2 border">{p.status}</td>
-                <td className="p-2 border">
-                  {p.status !== "Deleted" && (
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Created by</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  <Spinner />
+                </TableCell>
+              </TableRow>
+            ) : (
+              products?.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium flex items-center gap-3">
+                    {p.image_url && (
+                      <img
+                        src={p.image_url}
+                        className="w-10 h-10 rounded object-cover"
+                      />
+                    )}
+                    <div>
+                      <div>{p.title}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {p.description}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        p.status === "Draft"
+                          ? "secondary"
+                          : p.status === "Active"
+                            ? "default"
+                            : "destructive"
+                      }
+                    >
+                      {p.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>You</TableCell>{" "}
+                  <TableCell>
+                    {new Date(p.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
                     <Button
-                      variant="destructive"
+                      variant="ghost"
                       size="sm"
                       onClick={() => remove(p.id)}
                     >
-                      Delete
+                      ...
                     </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      <div className="flex gap-2 items-center">
-        <Button
-          disabled={page === 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-        >
-          Previous
-        </Button>
-        <span>Page {page}</span>
-        <Button onClick={() => setPage((p) => p + 1)}>Next</Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
