@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../../ui/button";
-import { LogOut, Menu, Settings, Users, X, Package, User } from "lucide-react";
+import { Menu, Users, X, Package } from "lucide-react";
 import { Separator } from "../../ui/separator";
 import { authService } from "../../../services/auth.service";
 import { handleError } from "../../../shared/errors/handleError";
-import { Spinner } from "../common/Spinner";
-import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { useTeamStore } from "../../../stores/teamStore";
 import { OnlineMembersSidebar } from "./OnlineMembersSidebar";
+import { TeamHeader } from "./TeamHeader";
+import { SidebarFooter } from "./SidebarFooter";
 
 export function DashboardLayout() {
   const [isOpen, setIsOpen] = useState(false);
@@ -100,68 +100,13 @@ export function DashboardLayout() {
           </div>
         </div>
 
-        <div className="mt-auto w-full flex flex-col gap-1.5 p-2">
-          <Separator className="my-1" />
-
-          <Button
-            variant={isActive("/dashboard/profile") ? "secondary" : "ghost"}
-            disabled={isLoggingOut}
-            onClick={() => navigate("/dashboard/profile")}
-            className={`h-11 w-full text-muted-foreground hover:text-indigo-600 hover:bg-indigo-500/10 active:scale-[0.98] transition-all duration-200 group ${
-              isOpen ? "justify-start px-3" : "justify-center px-0"
-            } ${isActive("/dashboard/profile") ? "text-indigo-600 bg-indigo-500/10" : ""}`}
-            title={!isOpen ? "My Profile" : undefined}
-          >
-            <User
-              className={`size-5 shrink-0 transition-all duration-200 group-hover:scale-110 ${isActive("/dashboard/profile") ? "text-indigo-600" : "group-hover:text-indigo-500"}`}
-            />
-            {isOpen && (
-              <span className="ml-3 text-sm font-medium animate-in fade-in duration-300">
-                My Profile
-              </span>
-            )}
-          </Button>
-
-          <Button
-            variant={isActive("/dashboard/settings") ? "secondary" : "ghost"}
-            disabled={isLoggingOut}
-            onClick={() => navigate("/dashboard/settings")}
-            className={`h-11 w-full text-muted-foreground hover:text-indigo-600 hover:bg-indigo-500/10 active:scale-[0.98] transition-all duration-200 group ${
-              isOpen ? "justify-start px-3" : "justify-center px-0"
-            } ${isActive("/dashboard/settings") ? "text-indigo-600 bg-indigo-500/10" : ""}`}
-            title={!isOpen ? "Team Settings" : undefined}
-          >
-            <Settings
-              className={`size-5 shrink-0 transition-transform duration-500 ease-out group-hover:rotate-45 ${isActive("/dashboard/settings") ? "text-indigo-600" : "group-hover:text-indigo-500"}`}
-            />
-            {isOpen && (
-              <span className="ml-3 text-sm font-medium animate-in fade-in duration-300">
-                Team Settings
-              </span>
-            )}
-          </Button>
-
-          <Button
-            variant="ghost"
-            disabled={isLoggingOut}
-            className={`h-11 w-full text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 active:scale-[0.98] transition-all duration-200 group ${
-              isOpen ? "justify-start px-3" : "justify-center px-0"
-            }`}
-            title={!isOpen ? "Logout" : undefined}
-            onClick={handleLogout}
-          >
-            {isLoggingOut ? (
-              <Spinner />
-            ) : (
-              <LogOut className="size-5 shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:text-rose-500" />
-            )}
-            {isOpen && !isLoggingOut && (
-              <span className="ml-3 text-sm font-medium animate-in fade-in duration-300">
-                Logout
-              </span>
-            )}
-          </Button>
-        </div>
+        <SidebarFooter
+          isOpen={isOpen}
+          isActive={isActive}
+          navigate={navigate}
+          onLogout={handleLogout}
+          isLoggingOut={isLoggingOut}
+        />
       </aside>
 
       <main
@@ -170,27 +115,7 @@ export function DashboardLayout() {
         }`}
       >
         <div className="flex flex-col h-full gap-6">
-          <header className="flex items-center justify-between bg-card border rounded-xl px-4 py-3 shadow-sm gap-4">
-            <div className="flex items-center w-[120px]">
-              <Avatar className="size-9 border">
-                <AvatarImage src={team?.avatar_url || ""} />
-                <AvatarFallback className="bg-primary/10">
-                  <Users className="size-4 text-primary" />
-                </AvatarFallback>
-              </Avatar>
-            </div>
-
-            <div className="flex flex-col items-center flex-1 min-w-0">
-              <h1 className="text-lg font-bold truncate max-w-full">
-                {team?.name || "My Team"}
-              </h1>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                Workspace
-              </span>
-            </div>
-
-            <div className="w-[120px] flex justify-end"></div>
-          </header>
+          <TeamHeader team={team} />
 
           <div className="bg-card border rounded-xl p-6 flex-1 shadow-sm">
             <Outlet />
