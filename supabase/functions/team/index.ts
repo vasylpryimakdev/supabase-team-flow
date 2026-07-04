@@ -1,6 +1,5 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { supabaseAdmin } from "../_shared/supabaseClient.ts";
+import { supabaseAdmin } from "../_shared/supabase.ts";
 
 async function getUser(req: Request) {
   const auth = req.headers.get("Authorization");

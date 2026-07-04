@@ -66,6 +66,7 @@ export const NavButton = ({
           active ? "text-current" : "group-hover:scale-110",
         )}
       />
+      {isOpen && <span className="ml-3 text-sm font-medium">{label}</span>}
     </Button>
   );
 };
