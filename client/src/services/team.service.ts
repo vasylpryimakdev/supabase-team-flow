@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import type { Team } from "../types/team.type";
+import type { Team } from "../types/team.types";
 import { api } from "./api";
 
 export const teamService = {
@@ -65,5 +65,20 @@ export const teamService = {
 
   async updateAvatar(teamId: string, avatarPath: string) {
     return this.updateTeam(teamId, { avatar_path: avatarPath });
+  },
+
+  async getTeamMembers(teamId: string) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(`
+      id,
+      name,
+      role,
+      avatar_url
+    `)
+      .eq("team_id", teamId);
+
+    if (error) throw error;
+    return data;
   },
 };

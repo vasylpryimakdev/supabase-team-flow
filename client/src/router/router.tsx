@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Outlet,
+  Navigate,
+} from "react-router-dom";
 
 import OnboardingPage from "../pages/OnboardingPage";
 import NotFoundPage from "../pages/NotFoundPage";
@@ -21,6 +27,7 @@ export function Router() {
       <ErrorBoundary>
         <RouteResolver>
           <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/auth" element={<Outlet />}>
               <Route path="signin" element={<SignInPage />} />
               <Route path="signup" element={<SignUpPage />} />

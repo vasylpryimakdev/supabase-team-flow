@@ -14,7 +14,7 @@ import { Separator } from "../../ui/separator";
 import { teamService } from "../../../services/team.service";
 import { useToastStore } from "../../../stores/toast.store";
 import { handleError } from "../../../shared/errors/handleError";
-import type { Team } from "../../../types/team.type";
+import type { Team } from "../../../types/team.types";
 
 type Props = {
   team: Team | null;

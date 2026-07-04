@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Team } from "../types/team.type";
+import type { Team } from "../types/team.types";
 
 interface TeamStore {
   team: Team | null;

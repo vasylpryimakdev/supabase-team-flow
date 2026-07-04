@@ -28,7 +28,7 @@ export const ProfilePage = () => {
   const updateProfileName = useAuthStore((s) => s.updateProfileName);
   const updateAvatar = useAuthStore((s) => s.updateAvatar);
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(profile?.name || "");
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export const ProfilePage = () => {
 
     try {
       setIsUpdating(true);
-      await updateProfileName(name);
+      await updateProfileName(name.trim());
     } catch (err) {
       handleError(err);
     } finally {
@@ -92,9 +92,9 @@ export const ProfilePage = () => {
             description="PNG, JPG or WEBP up to 2MB."
           />
 
-          <form onSubmit={handleUpdateProfile} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="profile-name">Display Name</Label>
+          <form onSubmit={handleUpdateProfile} className="space-y-2">
+            <Label htmlFor="profile-name">Name</Label>
+            <div className="flex gap-1">
               <Input
                 id="profile-name"
                 type="text"
@@ -105,15 +105,10 @@ export const ProfilePage = () => {
                 disabled={isUpdating}
                 className="w-full"
               />
+              <Button type="submit" disabled={isUpdating || !name.trim()}>
+                {isUpdating ? <Spinner /> : "Save Changes"}
+              </Button>
             </div>
-
-            <Button
-              type="submit"
-              disabled={isUpdating || !name.trim()}
-              className="w-full"
-            >
-              {isUpdating ? "Saving..." : "Save Changes"}
-            </Button>
           </form>
 
           <Separator className="my-4" />
