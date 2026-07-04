@@ -42,7 +42,7 @@ serve(async (req) => {
         ...payload,
         team_id: teamId,
         created_by: user.id,
-      }).select();
+      }).select().single();
 
       if (error) throw error;
       return new Response(JSON.stringify(data), {
@@ -75,7 +75,7 @@ serve(async (req) => {
         payload,
       )
         .eq("id", id)
-        .select();
+        .select().single();
 
       if (error) throw error;
       return new Response(JSON.stringify(data), {

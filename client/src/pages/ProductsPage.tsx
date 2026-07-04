@@ -48,7 +48,7 @@ const ProductsPage = () => {
             <DialogHeader>
               <DialogTitle>Create New Product</DialogTitle>
             </DialogHeader>
-            <ProductForm />
+            <ProductForm closeModal={() => setIsFormOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>

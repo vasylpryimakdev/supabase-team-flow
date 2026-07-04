@@ -85,7 +85,7 @@ export const storageService = {
     const { error: uploadError } = await supabase.storage
       .from("products")
       .upload(newFilePath, file);
-      
+
     if (uploadError) throw uploadError;
 
     await supabase

@@ -8,17 +8,45 @@ import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { useState } from "react";
 import { Textarea } from "../../ui/textarea";
+import { productService } from "../../../services/product.service";
+import { storageService } from "../../../services/storage.service";
+import { handleError } from "../../../shared/errors/handleError";
+import { Spinner } from "../common/Spinner";
 
-export const ProductForm = () => {
-  const [, setSelectedFile] = useState<File | null>(null);
+type Props = {
+  closeModal: () => void;
+};
+
+export const ProductForm = ({ closeModal }: Props) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
-  const form = useForm<ProductFormData>({
+  const { handleSubmit, register, formState } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues: { title: "", description: "", status: "Draft" },
+    defaultValues: { title: "", description: "" },
   });
 
-  const handleSubmit = () => {};
+  const onSubmit = async (data: ProductFormData) => {
+    setLoading(true);
+    try {
+      const newProduct = await productService.create({
+        title: data.title,
+        description: data.description,
+        status: "Draft",
+      });
+
+      if (selectedFile) {
+        await storageService.uploadProductImage(newProduct.id, selectedFile);
+      }
+
+      closeModal();
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -29,16 +57,14 @@ export const ProductForm = () => {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-      <Input {...form.register("title")} placeholder="Product Title" />
-      {form.formState.errors.title && (
-        <p className="text-red-500 text-xs">
-          {form.formState.errors.title.message}
-        </p>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Input {...register("title")} placeholder="Product Title" />
+      {formState.errors.title && (
+        <p className="text-red-500 text-xs">{formState.errors.title.message}</p>
       )}
 
       <Textarea
-        {...form.register("description")}
+        {...register("description")}
         placeholder="Product Description"
       />
 
@@ -77,7 +103,7 @@ export const ProductForm = () => {
       </div>
 
       <Button type="submit" className="w-full">
-        Save
+        {loading ? <Spinner /> : "Save"}
       </Button>
     </form>
   );
