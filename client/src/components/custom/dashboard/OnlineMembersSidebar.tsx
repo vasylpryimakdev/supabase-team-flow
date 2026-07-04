@@ -29,7 +29,21 @@ export const OnlineMembersSidebar = ({
   if (onlineMembers.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-1 w-full">
+    <div className="flex flex-col gap-1 w-full mt-4">
+      <div className="px-3 mb-2 mt-4 flex items-center gap-2">
+        <span
+          className={`font-bold text-green-500 tracking-wider uppercase flex items-center gap-1.5 ${isOpen ? "text-[10px]" : "text-[8px]"}`}
+        >
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+          </span>
+          {isOpen ? "Online" : "ON"}
+        </span>
+
+        <div className="flex-1 h-px bg-gradient-to-r from-green-500/50 to-transparent" />
+      </div>
+
       <TooltipProvider>
         {onlineMembers.map((member) => (
           <Tooltip key={member.id}>

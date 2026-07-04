@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../../ui/button";
-import { Menu, Users, X, Package } from "lucide-react";
-import { Separator } from "../../ui/separator";
+import { Menu, X } from "lucide-react";
 import { authService } from "../../../services/auth.service";
 import { handleError } from "../../../shared/errors/handleError";
 import { useTeamStore } from "../../../stores/teamStore";
-import { OnlineMembersSidebar } from "./OnlineMembersSidebar";
 import { TeamHeader } from "./TeamHeader";
 import { SidebarFooter } from "./SidebarFooter";
+import { SidebarNav } from "./SidebarNav";
 
 export function DashboardLayout() {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,51 +53,13 @@ export function DashboardLayout() {
           {isOpen ? <X className="size-7" /> : <Menu className="size-7" />}
         </Button>
 
-        <div className="px-2">
-          <Button
-            variant={isActive("/dashboard") ? "secondary" : "ghost"}
-            onClick={() => navigate("/dashboard")}
-            className={`h-11 w-full text-muted-foreground hover:text-indigo-600 hover:bg-indigo-500/10 active:scale-[0.98] transition-all duration-200 group ${
-              isOpen ? "justify-start px-3" : "justify-center px-0"
-            } ${isActive("/dashboard") ? "text-indigo-600 bg-indigo-500/10" : ""}`}
-            title={!isOpen ? "Products Dashboard" : undefined}
-          >
-            <Package
-              className={`size-5 shrink-0 transition-all duration-200 group-hover:scale-110 ${isActive("/dashboard") ? "text-indigo-600" : "group-hover:text-indigo-500"}`}
-            />
-            {isOpen && (
-              <span className="ml-3 text-sm font-semibold animate-in fade-in duration-300">
-                My Products
-              </span>
-            )}
-          </Button>
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-2 overflow-hidden px-2">
-          <Button
-            variant={isActive("/dashboard/members") ? "secondary" : "ghost"}
-            onClick={() => navigate("/dashboard/members")}
-            className={`h-11 w-full text-muted-foreground hover:text-indigo-600 hover:bg-indigo-500/10 active:scale-[0.98] transition-all duration-200 group ${
-              isOpen ? "justify-start px-3" : "justify-center px-0"
-            } ${isActive("/dashboard/members") ? "text-indigo-600 bg-indigo-500/10" : ""}`}
-            title={!isOpen ? "View All Members" : undefined}
-          >
-            <Users
-              className={`size-5 shrink-0 transition-all duration-200 group-hover:scale-110 ${isActive("/dashboard/members") ? "text-indigo-600" : "group-hover:text-indigo-500"}`}
-            />
-            {isOpen && (
-              <span className="ml-3 text-sm font-semibold uppercase tracking-wider animate-in fade-in duration-300">
-                Members
-              </span>
-            )}
-          </Button>
-
-          <div className="flex flex-col gap-1 w-full">
-            <OnlineMembersSidebar team={team} isOpen={isOpen} />
-          </div>
-        </div>
+        <SidebarNav
+          isOpen={isOpen}
+          isActive={isActive}
+          navigate={navigate}
+          team={team}
+          isLoggingOut={isLoggingOut}
+        />
 
         <SidebarFooter
           isOpen={isOpen}
