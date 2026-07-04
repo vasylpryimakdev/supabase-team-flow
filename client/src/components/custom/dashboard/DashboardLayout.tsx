@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../../ui/button";
 import { LogOut, Menu, Settings, Users, X, Package, User } from "lucide-react";
@@ -8,20 +8,22 @@ import { handleError } from "../../../shared/errors/handleError";
 import { Spinner } from "../common/Spinner";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { useTeamStore } from "../../../stores/teamStore";
-
-const TEAM_MEMBERS = [
-  { id: 1, name: "Олександр В.", avatar: "👨‍💻", color: "bg-blue-500/20" },
-  { id: 2, name: "Марія К.", avatar: "👩‍💼", color: "bg-green-500/20" },
-  { id: 3, name: "Дмитро П.", avatar: "🎨", color: "bg-purple-500/20" },
-];
+import { OnlineMembersSidebar } from "./OnlineMembersSidebar";
 
 export function DashboardLayout() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const team = useTeamStore((s) => s.team);
+  const initPresence = useTeamStore((s) => s.initPresence);
+  const cleanupPresence = useTeamStore((s) => s.cleanupPresence);
 
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (team?.id) initPresence(team.id);
+    return () => cleanupPresence();
+  }, [team?.id, initPresence, cleanupPresence]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -94,28 +96,7 @@ export function DashboardLayout() {
           </Button>
 
           <div className="flex flex-col gap-1 w-full">
-            {TEAM_MEMBERS.map((member) => (
-              <div
-                key={member.id}
-                onClick={() => navigate("/dashboard/members")}
-                className={`flex items-center rounded-md hover:bg-accent transition-all cursor-pointer h-10 w-full
-                  ${isOpen ? "justify-start gap-3 px-3" : "justify-center"} ${isActive("/dashboard/members") ? "bg-accent/60" : ""}`}
-                title={!isOpen ? member.name : undefined}
-              >
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0 transition-transform ${member.color}`}
-                >
-                  {member.avatar}
-                </div>
-                {isOpen && (
-                  <span
-                    className={`text-sm font-medium text-card-foreground truncate animate-in fade-in duration-200 ${isActive("/dashboard/members") ? "text-indigo-600 font-semibold" : ""}`}
-                  >
-                    {member.name}
-                  </span>
-                )}
-              </div>
-            ))}
+            <OnlineMembersSidebar team={team} isOpen={isOpen} />
           </div>
         </div>
 
@@ -208,8 +189,7 @@ export function DashboardLayout() {
               </span>
             </div>
 
-            <div className="w-[120px] flex justify-end">
-            </div>
+            <div className="w-[120px] flex justify-end"></div>
           </header>
 
           <div className="bg-card border rounded-xl p-6 flex-1 shadow-sm">
