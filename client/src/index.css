@@ -59,3 +59,36 @@
     @apply border-border;
   }
 }
+
+@layer utilities {
+  /* Приховуємо скролбар, якщо не наведено курсор */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent; /* Скролбар прихований */
+  }
+
+  /* Коли наводимо курсор на область, скролбар з'являється */
+  .custom-scrollbar:hover {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  /* Для Chrome, Safari, Edge */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: transparent; /* Спочатку невидимий */
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: hsl(
+      var(--muted-foreground) / 0.3
+    ); /* Ледь помітний при скролі */
+  }
+}
