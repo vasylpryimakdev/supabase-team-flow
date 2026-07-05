@@ -1,6 +1,16 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  productSchema,
+  type ProductFormData,
+} from "../../../shared/schemas/product.schema";
 import type { Product, ProductStatus } from "../../../types/product.types";
-import { Button } from "../../ui/button";
+import { productService } from "../../../services/product.service";
+import { storageService } from "../../../services/storage.service";
+import { TableCell, TableRow } from "../../ui/table";
 import { Input } from "../../ui/input";
+import { Textarea } from "../../ui/textarea";
 import {
   Select,
   SelectContent,
@@ -8,66 +18,93 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
-import { TableCell, TableRow } from "../../ui/table";
-import { Textarea } from "../../ui/textarea";
+import { Button } from "../../ui/button";
 
 interface ProductEditRowProps {
-  editForm: Partial<Product>;
-  onEditChange: (form: Partial<Product>) => void;
-  onSave: () => void;
-  onCancel: () => void;
+  product: Product;
+  setIsEditing: (id: string | null) => void;
 }
 
 export const ProductEditRow = ({
-  editForm,
-  onEditChange,
-  onSave,
-  onCancel,
+  product,
+  setIsEditing,
 }: ProductEditRowProps) => {
-  console.log(editForm);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(
+    product.image_url || null,
+  );
+  const [isSaving, setIsSaving] = useState(false);
+
+  const { register, handleSubmit, setValue, watch } = useForm<ProductFormData>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      title: product.title,
+      description: product.description || "",
+      status: product.status,
+    },
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const onSubmit = async (data: ProductFormData) => {
+    setIsSaving(true);
+    try {
+      await productService.update(product.id, data);
+
+      if (selectedFile) {
+        await storageService.uploadProductImage(product.id, selectedFile);
+      }
+
+      setIsEditing(null);
+    } catch (error) {
+      console.error("Update failed:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <TableRow className="bg-zinc-900/50">
       <TableCell className="w-16">
-        <Input
-          className="h-10 w-10 p-0 text-[10px] text-center"
-          value={editForm.image_url || ""}
-          onChange={(e) =>
-            onEditChange({ ...editForm, image_url: e.target.value })
-          }
-          placeholder="URL"
-        />
-      </TableCell>
-
-      <TableCell>
-        <div className="flex flex-col gap-2">
-          <Input
-            value={editForm.title || ""}
-            onChange={(e) =>
-              onEditChange({ ...editForm, title: e.target.value })
-            }
-            placeholder="Product title"
+        <div className="relative w-10 h-10 rounded-md overflow-hidden border border-zinc-700 cursor-pointer">
+          <input
+            type="file"
+            accept="image/*"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            onChange={handleFileChange}
           />
-          <Textarea
-            value={editForm.description || ""}
-            onChange={(e) =>
-              onEditChange({ ...editForm, description: e.target.value })
-            }
-            placeholder="Product description"
-            className="resize-none"
-          />
+          {preview ? (
+            <img
+              src={preview}
+              className="w-full h-full object-cover"
+              alt="Preview"
+            />
+          ) : (
+            <span className="text-[10px] text-zinc-500 flex items-center justify-center h-full">
+              Edit
+            </span>
+          )}
         </div>
       </TableCell>
-
+      <TableCell>
+        <div className="flex flex-col gap-2">
+          <Input {...register("title")} />
+          <Textarea {...register("description")} className="resize-none" />
+        </div>
+      </TableCell>
       <TableCell>
         <Select
-          value={editForm.status}
-          onValueChange={(v) =>
-            onEditChange({ ...editForm, status: v as ProductStatus })
-          }
+          value={watch("status")}
+          onValueChange={(v) => setValue("status", v as ProductStatus)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Status" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Draft">Draft</SelectItem>
@@ -75,19 +112,20 @@ export const ProductEditRow = ({
           </SelectContent>
         </Select>
       </TableCell>
-
       <TableCell className="text-zinc-500 text-sm italic">
         (unchanged)
       </TableCell>
-
-      <TableCell className="text-zinc-500 text-sm"> (unchanged)</TableCell>
-
+      <TableCell className="text-zinc-500 text-sm">-</TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
-          <Button size="sm" onClick={onSave}>
-            Save
+          <Button
+            size="sm"
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save"}
           </Button>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
+          <Button variant="ghost" size="sm" onClick={() => setIsEditing(null)}>
             Cancel
           </Button>
         </div>

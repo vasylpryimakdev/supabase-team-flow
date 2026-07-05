@@ -21,10 +21,6 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog";
 import { ProductForm } from "../components/custom/products/ProductForm";
-
-import type { Product } from "../types/product.types";
-
-import { productService } from "../services/product.service";
 import { ProductDisplayRow } from "../components/custom/products/ProductDisplayRow";
 import { ProductEditRow } from "../components/custom/products/ProductEditRow";
 
@@ -34,19 +30,8 @@ const ProductsPage = () => {
   const [status, setStatus] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Product>>({});
 
   const { products, isLoading, remove } = useProducts({ page, status, search });
-
-  const startEdit = (p: Product) => {
-    setEditingId(p.id);
-    setEditForm({ ...p });
-  };
-
-  const saveChanges = async () => {
-    await productService.update(editingId!, editForm);
-    setEditingId(null);
-  };
 
   return (
     <div className="p-6 space-y-6">
@@ -121,16 +106,14 @@ const ProductsPage = () => {
                 editingId === p.id ? (
                   <ProductEditRow
                     key={p.id}
-                    editForm={editForm}
-                    onEditChange={setEditForm}
-                    onSave={saveChanges}
-                    onCancel={() => setEditingId(null)}
+                    product={p}
+                    setIsEditing={setEditingId}
                   />
                 ) : (
                   <ProductDisplayRow
                     key={p.id}
                     product={p}
-                    onEdit={() => startEdit(p)}
+                    onEdit={() => setEditingId(p.id)} 
                     onRemove={() => remove(p.id)}
                   />
                 ),
