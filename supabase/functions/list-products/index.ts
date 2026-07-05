@@ -15,9 +15,12 @@ serve(async (req) => {
     return new Response("Unauthorized", { status: 401, headers: corsHeaders });
   }
 
-  const { data: profile } = await supabaseAdmin.from("profiles").select(
-    "team_id",
-  ).eq("id", user.id).single();
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("team_id")
+    .eq("id", user.id)
+    .single();
+
   if (!profile?.team_id) {
     return new Response("No team", { status: 403, headers: corsHeaders });
   }
@@ -31,20 +34,29 @@ serve(async (req) => {
 
   let query = supabaseAdmin
     .from("products")
-    .select("*", { count: "exact" })
+    .select(
+      `
+      *,
+      profiles (
+        name
+      )
+    `,
+      { count: "exact" },
+    )
     .eq("team_id", profile.team_id);
 
-  if (status) query = query.eq("status", status);
+  if (status && status !== "all") query = query.eq("status", status);
   if (created_by) query = query.eq("created_by", created_by);
   if (search) {
     query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
   }
+
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-  const { data, count, error } = await query.range(from, to).order(
-    "created_at",
-    { ascending: false },
-  );
+
+  const { data, count, error } = await query
+    .range(from, to)
+    .order("created_at", { ascending: false });
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
@@ -53,7 +65,23 @@ serve(async (req) => {
     });
   }
 
-  return new Response(JSON.stringify({ data, count, page, pageSize }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  const formattedData = data?.map((product) => {
+    const { profiles, ...rest } = product;
+    return {
+      ...rest,
+      created_by_name: profiles?.name ?? "Unknown",
+    };
   });
+
+  return new Response(
+    JSON.stringify({
+      data: formattedData,
+      count,
+      page,
+      pageSize,
+    }),
+    {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    },
+  );
 });

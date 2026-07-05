@@ -4,7 +4,6 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Spinner } from "../components/custom/common/Spinner";
 
-import { Badge } from "../components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import {
   Table,
@@ -23,13 +22,31 @@ import {
 } from "../components/ui/dialog";
 import { ProductForm } from "../components/custom/products/ProductForm";
 
+import type { Product } from "../types/product.types";
+
+import { productService } from "../services/product.service";
+import { ProductDisplayRow } from "../components/custom/products/ProductDisplayRow";
+import { ProductEditRow } from "../components/custom/products/ProductEditRow";
+
 const ProductsPage = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Product>>({});
 
   const { products, isLoading, remove } = useProducts({ page, status, search });
+
+  const startEdit = (p: Product) => {
+    setEditingId(p.id);
+    setEditForm({ ...p });
+  };
+
+  const saveChanges = async () => {
+    await productService.update(editingId!, editForm);
+    setEditingId(null);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -84,6 +101,7 @@ const ProductsPage = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead></TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created by</TableHead>
@@ -94,55 +112,29 @@ const ProductsPage = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   <Spinner />
                 </TableCell>
               </TableRow>
             ) : (
-              products?.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium flex items-center gap-3">
-                    {p.image_url && (
-                      <img
-                        src={p.image_url}
-                        className="w-10 h-10 rounded object-cover"
-                      />
-                    )}
-                    <div>
-                      <div>{p.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {p.description}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        p.status === "Draft"
-                          ? "secondary"
-                          : p.status === "Active"
-                            ? "default"
-                            : "destructive"
-                      }
-                    >
-                      {p.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>You</TableCell>{" "}
-                  <TableCell>
-                    {new Date(p.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => remove(p.id)}
-                    >
-                      ...
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              products?.map((p) =>
+                editingId === p.id ? (
+                  <ProductEditRow
+                    key={p.id}
+                    editForm={editForm}
+                    onEditChange={setEditForm}
+                    onSave={saveChanges}
+                    onCancel={() => setEditingId(null)}
+                  />
+                ) : (
+                  <ProductDisplayRow
+                    key={p.id}
+                    product={p}
+                    onEdit={() => startEdit(p)}
+                    onRemove={() => remove(p.id)}
+                  />
+                ),
+              )
             )}
           </TableBody>
         </Table>
