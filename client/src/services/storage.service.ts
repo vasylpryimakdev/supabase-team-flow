@@ -72,13 +72,11 @@ export const storageService = {
     return publicUrl;
   },
 
-  async uploadProductImage(productId: string, file: File): Promise<string> {
-    const { data: product } = await supabase
-      .from("products")
-      .select("image_path")
-      .eq("id", productId)
-      .single();
-
+  async uploadProductImage(
+    productId: string,
+    file: File,
+    oldImagePath?: string | null,
+  ): Promise<string> {
     const fileExt = file.name.split(".").pop();
     const newFilePath = `${productId}/${Date.now()}.${fileExt}`;
 
@@ -86,15 +84,18 @@ export const storageService = {
       .from("products")
       .upload(newFilePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      throw uploadError;
+    }
 
-    await supabase
-      .from("products")
-      .update({ image_path: newFilePath })
-      .eq("id", productId);
+    if (oldImagePath) {
+      const { error: removeError } = await supabase.storage
+        .from("products")
+        .remove([oldImagePath]);
 
-    if (product?.image_path) {
-      await supabase.storage.from("products").remove([product.image_path]);
+      if (removeError) {
+        console.warn("Failed to remove old image:", removeError);
+      }
     }
 
     return newFilePath;

@@ -20,9 +20,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+
 import { ProductForm } from "../components/custom/products/ProductForm";
 import { ProductDisplayRow } from "../components/custom/products/ProductDisplayRow";
 import { ProductEditRow } from "../components/custom/products/ProductEditRow";
+
+import type { Product } from "../types/product.types";
+import type { ProductFormData } from "../shared/schemas/product.schema";
 
 const ProductsPage = () => {
   const [page, setPage] = useState(1);
@@ -31,7 +35,32 @@ const ProductsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { products, isLoading, remove } = useProducts({ page, status, search });
+  const { products, isLoading, createAsync, update, remove } = useProducts({
+    page,
+    status,
+    search,
+  });
+
+  const handleCreate = async (data: ProductFormData): Promise<Product> => {
+    const product = await createAsync({
+      title: data.title,
+      description: data.description,
+      status: data.status ?? "Draft",
+    });
+
+    setIsFormOpen(false);
+
+    return product;
+  };
+
+  const handleUpdate = (id: string, data: Partial<Product>) => {
+    update({
+      id,
+      data,
+    });
+
+    setEditingId(null);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -42,15 +71,21 @@ const ProductsPage = () => {
             Create, edit and manage your team's products.
           </p>
         </div>
+
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
             <Button>+ New product</Button>
           </DialogTrigger>
-          <DialogContent className="bg-zinc-900 border-zinc-800 backdrop-blur-3xl opacity-100 p-6 border shadow-xl">
+
+          <DialogContent className="bg-zinc-900 border-zinc-800 backdrop-blur-3xl p-6 border shadow-xl">
             <DialogHeader>
               <DialogTitle>Create New Product</DialogTitle>
             </DialogHeader>
-            <ProductForm closeModal={() => setIsFormOpen(false)} />
+
+            <ProductForm
+              closeModal={() => setIsFormOpen(false)}
+              onCreate={handleCreate}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -65,10 +100,11 @@ const ProductsPage = () => {
           }}
           className="max-w-sm"
         />
+
         <Tabs
           value={status}
-          onValueChange={(v) => {
-            setStatus(v);
+          onValueChange={(value) => {
+            setStatus(value);
             setPage(1);
           }}
           className="w-auto"
@@ -77,7 +113,6 @@ const ProductsPage = () => {
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="Draft">Draft</TabsTrigger>
             <TabsTrigger value="Active">Active</TabsTrigger>
-            <TabsTrigger value="Deleted">Deleted</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -86,7 +121,7 @@ const ProductsPage = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead></TableHead>
+              <TableHead />
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created by</TableHead>
@@ -94,6 +129,7 @@ const ProductsPage = () => {
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {isLoading ? (
               <TableRow>
@@ -102,19 +138,20 @@ const ProductsPage = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              products?.map((p) =>
-                editingId === p.id ? (
+              products.map((product) =>
+                editingId === product.id ? (
                   <ProductEditRow
-                    key={p.id}
-                    product={p}
-                    setIsEditing={setEditingId}
+                    key={product.id}
+                    product={product}
+                    onUpdate={handleUpdate}
+                    onCancel={() => setEditingId(null)}
                   />
                 ) : (
                   <ProductDisplayRow
-                    key={p.id}
-                    product={p}
-                    onEdit={() => setEditingId(p.id)}
-                    onRemove={() => remove(p.id)}
+                    key={product.id}
+                    product={product}
+                    onEdit={() => setEditingId(product.id)}
+                    onRemove={() => remove(product.id)}
                   />
                 ),
               )

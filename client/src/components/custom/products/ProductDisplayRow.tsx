@@ -64,7 +64,10 @@ export const ProductDisplayRow = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
+            {product.status !== "Active" && (
+              <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
+            )}
+
             <DropdownMenuItem
               className="text-red-600 focus:text-red-600"
               onClick={onRemove}

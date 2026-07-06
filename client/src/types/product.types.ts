@@ -13,13 +13,11 @@ export interface Product {
 export const PRODUCT_STATUSES = {
   DRAFT: "Draft",
   ACTIVE: "Active",
-  DELETED: "Deleted",
 } as const;
 
-export const PRODUCT_STATUS_VALUES = Object.values(PRODUCT_STATUSES) as [
-  string,
-  ...string[],
-];
+export const PRODUCT_STATUS_VALUES = [
+  PRODUCT_STATUSES.DRAFT,
+  PRODUCT_STATUSES.ACTIVE,
+] as const;
 
-export type ProductStatus =
-  typeof PRODUCT_STATUSES[keyof typeof PRODUCT_STATUSES];
+export type ProductStatus = (typeof PRODUCT_STATUS_VALUES)[number];
