@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useProducts } from "../hooks/useProducts";
-import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Spinner } from "../components/custom/common/Spinner";
 
@@ -12,61 +11,37 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../components/ui/dialog";
 
-import { ProductForm } from "../components/custom/products/ProductForm";
 import { ProductDisplayRow } from "../components/custom/products/ProductDisplayRow";
 import { ProductEditRow } from "../components/custom/products/ProductEditRow";
 
-import type { Product } from "../types/product.types";
-import type { ProductFormData } from "../shared/schemas/product.schema";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
+  DEFAULT_PRODUCT_FILTERS,
+  type Product,
+  type ProductFilters,
+  type ProductSortField,
+} from "../types/product.types";
+import type { ProductFormData } from "../shared/schemas/product.schema";
 import { useAuthStore } from "../stores/auth.store";
-import { useTeamMembers } from "../hooks/useTeamMembers";
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import ProductCreateDialog from "../components/custom/products/ProductCreateDialog";
+import ProductsFilters from "../components/custom/products/ProductsFilters";
 
 const ProductsPage = () => {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [createdBy, setCreatedBy] = useState("all");
-  const [sortBy, setSortBy] = useState<"created_at" | "updated_at">(
-    "created_at",
+  const [filters, setFilters] = useState<ProductFilters>(
+    DEFAULT_PRODUCT_FILTERS,
   );
 
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const { products, count, isLoading, createAsync, update, remove } =
-    useProducts({
-      page,
-      status,
-      search,
-      createdBy,
-      sortBy,
-      sortOrder,
-    });
+    useProducts(filters);
 
   const pageSize = 10;
   const totalPages = Math.max(1, Math.ceil(count / pageSize));
 
   const profile = useAuthStore((s) => s.profile);
-  const { data: members = [] } = useTeamMembers(profile?.team_id ?? undefined);
-
-  console.log(profile, members);
 
   const handleCreate = async (data: ProductFormData): Promise<Product> => {
     const product = await createAsync({
@@ -89,23 +64,33 @@ const ProductsPage = () => {
     setEditingId(null);
   };
 
-  const handleSort = (field: "created_at" | "updated_at") => {
-    if (sortBy === field) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(field);
-      setSortOrder("desc");
-    }
-
-    setPage(1);
+  const updateFilters = (updates: Partial<ProductFilters>) => {
+    setFilters((prev) => ({
+      ...prev,
+      ...updates,
+    }));
   };
 
-  const getSortIcon = (field: "created_at" | "updated_at") => {
-    if (sortBy !== field) {
+  const handleSort = (field: ProductSortField) => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy: field,
+      sortOrder:
+        prev.sortBy === field
+          ? prev.sortOrder === "asc"
+            ? "desc"
+            : "asc"
+          : "desc",
+      page: 1,
+    }));
+  };
+
+  const getSortIcon = (field: ProductSortField) => {
+    if (filters.sortBy !== field) {
       return <ArrowUpDown className="ml-2 h-4 w-4" />;
     }
 
-    return sortOrder === "asc" ? (
+    return filters.sortOrder === "asc" ? (
       <ArrowUp className="ml-2 h-4 w-4" />
     ) : (
       <ArrowDown className="ml-2 h-4 w-4" />
@@ -122,75 +107,17 @@ const ProductsPage = () => {
           </p>
         </div>
 
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button>+ New product</Button>
-          </DialogTrigger>
-
-          <DialogContent className="bg-zinc-900 border-zinc-800 backdrop-blur-3xl p-6 border shadow-xl">
-            <DialogHeader>
-              <DialogTitle>Create New Product</DialogTitle>
-            </DialogHeader>
-
-            <ProductForm
-              closeModal={() => setIsFormOpen(false)}
-              onCreate={handleCreate}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="flex items-center justify-between gap-4">
-        <Input
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="max-w-sm"
+        <ProductCreateDialog
+          isFormOpen={isFormOpen}
+          onCloseModal={() => setIsFormOpen(false)}
+          onCreate={handleCreate}
         />
-        <div className="flex items-center gap-4">
-          <Select
-            value={status}
-            onValueChange={(value) => {
-              setStatus(value);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="Draft">Draft</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={createdBy}
-            onValueChange={(value) => {
-              setCreatedBy(value);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-56">
-              <SelectValue placeholder="Created by" />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="all">All creators</SelectItem>
-
-              {members.map((member) => (
-                <SelectItem key={member.id} value={member.id}>
-                  {member.name === profile?.name ? "You" : member.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
+      <ProductsFilters
+        profile={profile}
+        filters={filters}
+        onUpdateFilters={updateFilters}
+      />
 
       <div className="rounded-md border">
         <Table>
@@ -258,15 +185,19 @@ const ProductsPage = () => {
         </Table>
         <div className="flex items-center justify-between border-t px-4 py-4">
           <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            Page {filters.page} of {totalPages}
           </p>
 
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
+              disabled={filters.page === 1}
+              onClick={() =>
+                updateFilters({
+                  page: filters.page - 1,
+                })
+              }
             >
               Previous
             </Button>
@@ -274,8 +205,12 @@ const ProductsPage = () => {
             <Button
               variant="outline"
               size="sm"
-              disabled={page === totalPages}
-              onClick={() => setPage((prev) => prev + 1)}
+              disabled={filters.page === totalPages}
+              onClick={() =>
+                updateFilters({
+                  page: filters.page + 1,
+                })
+              }
             >
               Next
             </Button>

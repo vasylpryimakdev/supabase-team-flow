@@ -1,13 +1,7 @@
-import type { Product } from "../types/product.types";
 import { api } from "./api";
-export interface ProductListParams {
-  page?: number;
-  status?: string;
-  search?: string;
-  createdBy?: string;
-  sortBy: string;
-  sortOrder: string;
-}
+import type { Product, ProductFilters } from "../types/product.types";
+
+export type ProductListParams = ProductFilters;
 
 export const productService = {
   create: (data: Partial<Product>) =>

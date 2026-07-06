@@ -21,3 +21,27 @@ export const PRODUCT_STATUS_VALUES = [
 ] as const;
 
 export type ProductStatus = (typeof PRODUCT_STATUS_VALUES)[number];
+
+export type ProductStatusFilter = ProductStatus | "all";
+
+export type ProductSortField = "created_at" | "updated_at";
+
+export type SortOrder = "asc" | "desc";
+
+export interface ProductFilters {
+  page: number;
+  search: string;
+  status: ProductStatusFilter;
+  createdBy: string;
+  sortBy: ProductSortField;
+  sortOrder: SortOrder;
+}
+
+export const DEFAULT_PRODUCT_FILTERS: ProductFilters = {
+  page: 1,
+  search: "",
+  status: "all",
+  createdBy: "all",
+  sortBy: "created_at",
+  sortOrder: "desc",
+};
