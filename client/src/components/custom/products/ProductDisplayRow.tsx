@@ -9,7 +9,6 @@ import {
 } from "../../ui/dropdown-menu";
 import { Button } from "../../ui/button";
 import { Badge } from "../../ui/badge";
-import { cn } from "../../../lib/utils";
 
 interface ProductDisplayRowProps {
   product: Product;
@@ -22,27 +21,18 @@ export const ProductDisplayRow = ({
   onEdit,
   onRemove,
 }: ProductDisplayRowProps) => {
-  const isDeleted = product.status === "Deleted";
-
   return (
-    <TableRow className={cn(isDeleted && "opacity-50")}>
+    <TableRow>
       <TableCell className="w-16">
-        <div
-          className={cn(
-            "w-10 h-10 rounded-md overflow-hidden bg-zinc-800 flex items-center justify-center border border-zinc-700",
-            isDeleted && "grayscale",
-          )}
-        >
-          {product.image_url ? (
+        {product.image_url && (
+          <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 flex items-center justify-center border border-zinc-700">
             <img
               src={product.image_url}
               alt={product.title}
               className="w-full h-full object-cover"
             />
-          ) : (
-            <span className="text-[10px] text-zinc-500 uppercase">No img</span>
-          )}
-        </div>
+          </div>
+        )}
       </TableCell>
 
       <TableCell className="font-medium flex items-center gap-3 whitespace-normal">
@@ -55,15 +45,7 @@ export const ProductDisplayRow = ({
       </TableCell>
 
       <TableCell>
-        <Badge
-          variant={
-            isDeleted
-              ? "secondary"
-              : product.status === "Active"
-                ? "default"
-                : "secondary"
-          }
-        >
+        <Badge variant={product.status === "Active" ? "default" : "secondary"}>
           {product.status}
         </Badge>
       </TableCell>
@@ -75,26 +57,22 @@ export const ProductDisplayRow = ({
       </TableCell>
 
       <TableCell className="text-right">
-        {!isDeleted ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600 focus:text-red-600"
-                onClick={onRemove}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <span className="self-center">-</span>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600"
+              onClick={onRemove}
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </TableCell>
     </TableRow>
   );

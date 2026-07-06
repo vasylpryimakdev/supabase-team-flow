@@ -43,7 +43,8 @@ serve(async (req) => {
     `,
       { count: "exact" },
     )
-    .eq("team_id", profile.team_id);
+    .eq("team_id", profile.team_id)
+    .neq("status", "Deleted");
 
   if (status && status !== "all") query = query.eq("status", status);
   if (created_by) query = query.eq("created_by", created_by);

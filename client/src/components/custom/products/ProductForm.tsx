@@ -12,6 +12,7 @@ import { productService } from "../../../services/product.service";
 import { storageService } from "../../../services/storage.service";
 import { handleError } from "../../../shared/errors/handleError";
 import { Spinner } from "../common/Spinner";
+import type { ProductStatus } from "../../../types/product.types";
 
 type Props = {
   closeModal: () => void;
@@ -24,7 +25,7 @@ export const ProductForm = ({ closeModal }: Props) => {
 
   const { handleSubmit, register, formState } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues: { title: "", description: "" },
+    defaultValues: { title: "", description: "", status: "Draft" },
   });
 
   const onSubmit = async (data: ProductFormData) => {
@@ -33,7 +34,7 @@ export const ProductForm = ({ closeModal }: Props) => {
       const newProduct = await productService.create({
         title: data.title,
         description: data.description,
-        status: "Draft",
+        status: data.status as ProductStatus,
       });
 
       if (selectedFile) {

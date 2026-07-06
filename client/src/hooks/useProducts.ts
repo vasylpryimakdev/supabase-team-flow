@@ -21,18 +21,89 @@ export const useProducts = (params: ProductListParams) => {
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Product>) => productService.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+      const previousProducts = queryClient.getQueryData(["products", params]);
+
+      queryClient.setQueriesData({ queryKey: ["products"] }, (old: any) => {
+        if (!old) return old;
+        const newProduct = {
+          ...newData,
+          id: "temp-id-" + Date.now(),
+        } as Product;
+        return {
+          ...old,
+          data: [...(old.data || []), newProduct],
+          count: (old.count || 0) + 1,
+        };
+      });
+      return { previousProducts };
+    },
+
+    onError: (_err, _newData, context) => {
+      queryClient.setQueryData(["products", params], context?.previousProducts);
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Product> }) =>
       productService.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+      const previousProducts = queryClient.getQueryData(["products", params]);
+
+      queryClient.setQueriesData({ queryKey: ["products"] }, (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: old.data.map((p: Product) =>
+            p.id === id ? { ...p, ...data } : p
+          ),
+        };
+      });
+      return { previousProducts };
+    },
+
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData(["products", params], context?.previousProducts);
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => productService.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+      const previousProducts = queryClient.getQueryData(["products", params]);
+
+      queryClient.setQueriesData({ queryKey: ["products"] }, (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: old.data.filter((p: Product) => p.id !== id),
+          count: Math.max((old.count || 0) - 1, 0),
+        };
+      });
+      return { previousProducts };
+    },
+
+    onError: (_err, _id, context) => {
+      queryClient.setQueryData(["products", params], context?.previousProducts);
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
   });
 
   return {
@@ -41,7 +112,7 @@ export const useProducts = (params: ProductListParams) => {
     isLoading: listQuery.isLoading,
     isFetching: listQuery.isFetching,
     error: listQuery.error,
-    create: createMutation.mutate,
+    createAsync: createMutation.mutateAsync,
     update: updateMutation.mutate,
     remove: deleteMutation.mutate,
     isMutating: createMutation.isPending || updateMutation.isPending ||

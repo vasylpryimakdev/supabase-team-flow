@@ -113,7 +113,7 @@ const ProductsPage = () => {
                   <ProductDisplayRow
                     key={p.id}
                     product={p}
-                    onEdit={() => setEditingId(p.id)} 
+                    onEdit={() => setEditingId(p.id)}
                     onRemove={() => remove(p.id)}
                   />
                 ),
