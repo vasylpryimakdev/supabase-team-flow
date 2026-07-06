@@ -1,20 +1,5 @@
 import { useState } from "react";
 import { useProducts } from "../hooks/useProducts";
-import { Button } from "../components/ui/button";
-import { Spinner } from "../components/custom/common/Spinner";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
-
-import { ProductDisplayRow } from "../components/custom/products/ProductDisplayRow";
-import { ProductEditRow } from "../components/custom/products/ProductEditRow";
-
 import {
   DEFAULT_PRODUCT_FILTERS,
   type Product,
@@ -23,23 +8,19 @@ import {
 } from "../types/product.types";
 import type { ProductFormData } from "../shared/schemas/product.schema";
 import { useAuthStore } from "../stores/auth.store";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import ProductCreateDialog from "../components/custom/products/ProductCreateDialog";
 import ProductsFilters from "../components/custom/products/ProductsFilters";
+import ProductsTable from "../components/custom/products/ProductsTable";
 
 const ProductsPage = () => {
   const [filters, setFilters] = useState<ProductFilters>(
     DEFAULT_PRODUCT_FILTERS,
   );
-
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const { products, count, isLoading, createAsync, update, remove } =
     useProducts(filters);
-
-  const pageSize = 10;
-  const totalPages = Math.max(1, Math.ceil(count / pageSize));
 
   const profile = useAuthStore((s) => s.profile);
 
@@ -85,18 +66,6 @@ const ProductsPage = () => {
     }));
   };
 
-  const getSortIcon = (field: ProductSortField) => {
-    if (filters.sortBy !== field) {
-      return <ArrowUpDown className="ml-2 h-4 w-4" />;
-    }
-
-    return filters.sortOrder === "asc" ? (
-      <ArrowUp className="ml-2 h-4 w-4" />
-    ) : (
-      <ArrowDown className="ml-2 h-4 w-4" />
-    );
-  };
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -119,104 +88,19 @@ const ProductsPage = () => {
         onUpdateFilters={updateFilters}
       />
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead />
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created by</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="px-0"
-                  onClick={() => handleSort("created_at")}
-                >
-                  Created
-                  {getSortIcon("created_at")}
-                </Button>
-              </TableHead>
-
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="px-0"
-                  onClick={() => handleSort("updated_at")}
-                >
-                  Updated
-                  {getSortIcon("updated_at")}
-                </Button>
-              </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  <Spinner />
-                </TableCell>
-              </TableRow>
-            ) : (
-              products.map((product) =>
-                editingId === product.id ? (
-                  <ProductEditRow
-                    key={product.id}
-                    product={product}
-                    onUpdate={handleUpdate}
-                    onCancel={() => setEditingId(null)}
-                  />
-                ) : (
-                  <ProductDisplayRow
-                    key={product.id}
-                    product={product}
-                    profile={profile}
-                    onEdit={() => setEditingId(product.id)}
-                    onRemove={() => remove(product.id)}
-                  />
-                ),
-              )
-            )}
-          </TableBody>
-        </Table>
-        <div className="flex items-center justify-between border-t px-4 py-4">
-          <p className="text-sm text-muted-foreground">
-            Page {filters.page} of {totalPages}
-          </p>
-
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={filters.page === 1}
-              onClick={() =>
-                updateFilters({
-                  page: filters.page - 1,
-                })
-              }
-            >
-              Previous
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={filters.page === totalPages}
-              onClick={() =>
-                updateFilters({
-                  page: filters.page + 1,
-                })
-              }
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ProductsTable
+        products={products}
+        filters={filters}
+        count={count}
+        isLoading={isLoading}
+        profile={profile}
+        onSort={handleSort}
+        editingId={editingId}
+        onUpdateProduct={handleUpdate}
+        onUpdateFilters={updateFilters}
+        onRemove={remove}
+        setEditingId={setEditingId}
+      />
     </div>
   );
 };
