@@ -9,14 +9,17 @@ import {
 } from "../../ui/dropdown-menu";
 import { Button } from "../../ui/button";
 import { Badge } from "../../ui/badge";
+import type { Profile } from "../../../types/profile.type";
 
 interface ProductDisplayRowProps {
   product: Product;
+  profile: Profile | null;
   onEdit: () => void;
   onRemove: () => void;
 }
 
 export const ProductDisplayRow = ({
+  profile,
   product,
   onEdit,
   onRemove,
@@ -50,10 +53,18 @@ export const ProductDisplayRow = ({
         </Badge>
       </TableCell>
 
-      <TableCell className="text-zinc-400">{product.created_by_name}</TableCell>
+      <TableCell className="text-zinc-400">
+        {product.created_by_name === profile?.name
+          ? "You"
+          : product.created_by_name}
+      </TableCell>
 
       <TableCell className="text-zinc-500 text-sm">
         {new Date(product.created_at).toLocaleDateString()}
+      </TableCell>
+
+      <TableCell className="text-zinc-500 text-sm">
+        {new Date(product.updated_at).toLocaleDateString()}
       </TableCell>
 
       <TableCell className="text-right">

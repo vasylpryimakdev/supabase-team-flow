@@ -5,6 +5,8 @@ export interface ProductListParams {
   status?: string;
   search?: string;
   createdBy?: string;
+  sortBy: string;
+  sortOrder: string;
 }
 
 export const productService = {
@@ -24,19 +26,24 @@ export const productService = {
   list: (params: ProductListParams) => {
     const query = new URLSearchParams();
 
-    if (params.page) query.append("page", params.page.toString());
+    if (params.page) {
+      query.append("page", params.page.toString());
+    }
 
     if (params.status && params.status !== "all") {
       query.append("status", params.status);
     }
 
-    if (params.search) {
-      query.append("search", params.search);
+    if (params.search?.trim()) {
+      query.append("search", params.search.trim());
     }
 
-    if (params.createdBy) {
+    if (params.createdBy && params.createdBy !== "all") {
       query.append("created_by", params.createdBy);
     }
+
+    query.append("sort_by", params.sortBy);
+    query.append("sort_order", params.sortOrder);
 
     return api.get<{ data: Product[]; count: number }>(
       `list-products?${query.toString()}`,
