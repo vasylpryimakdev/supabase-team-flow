@@ -66,6 +66,15 @@ const ProductsPage = () => {
     }
   };
 
+  const handleActivateProduct = async (id: string) => {
+    await update({
+      id,
+      data: {
+        status: "Active",
+      },
+    });
+  };
+
   const handleUpdate = (id: string, data: Partial<Product>) => {
     update({
       id,
@@ -130,6 +139,7 @@ const ProductsPage = () => {
         onUpdateFilters={updateFilters}
         onRemove={remove}
         setEditingId={setEditingId}
+        onChangeStatus={handleActivateProduct}
       />
     </div>
   );

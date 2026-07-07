@@ -16,6 +16,7 @@ interface ProductDisplayRowProps {
   profile: Profile | null;
   onEdit: () => void;
   onRemove: () => void;
+  onActivate: (id: string) => Promise<void>;
 }
 
 export const ProductDisplayRow = ({
@@ -23,6 +24,7 @@ export const ProductDisplayRow = ({
   product,
   onEdit,
   onRemove,
+  onActivate,
 }: ProductDisplayRowProps) => {
   return (
     <TableRow>
@@ -69,18 +71,29 @@ export const ProductDisplayRow = ({
 
       <TableCell className="text-right">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {product.status !== "Active" && (
-              <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
+              <>
+                <DropdownMenuItem className="cursor-pointer" onClick={onEdit}>
+                  Edit
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => onActivate(product.id)}
+                >
+                  Activate
+                </DropdownMenuItem>
+              </>
             )}
 
             <DropdownMenuItem
-              className="text-red-600 focus:text-red-600"
+              className="text-red-600 focus:text-red-600 cursor-pointer"
               onClick={onRemove}
             >
               Delete

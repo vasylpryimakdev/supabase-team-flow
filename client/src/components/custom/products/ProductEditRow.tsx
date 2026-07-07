@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -14,14 +14,9 @@ import { storageService } from "../../../services/storage.service";
 import { TableCell, TableRow } from "../../ui/table";
 import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../ui/select";
+
 import { Button } from "../../ui/button";
+import { Badge } from "../../ui/badge";
 
 interface ProductEditRowProps {
   product: Product;
@@ -40,7 +35,7 @@ export const ProductEditRow = ({
   );
   const [isSaving, setIsSaving] = useState(false);
 
-  const { register, handleSubmit, control } = useForm<ProductFormData>({
+  const { register, handleSubmit } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       title: product.title,
@@ -120,29 +115,16 @@ export const ProductEditRow = ({
       </TableCell>
 
       <TableCell>
-        <Controller
-          control={control}
-          name="status"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="Draft">Draft</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
+        <Badge variant={product.status === "Active" ? "default" : "secondary"}>
+          {product.status}
+        </Badge>
       </TableCell>
 
       <TableCell className="text-sm italic text-zinc-500">
         (unchanged)
       </TableCell>
 
-      <TableCell className="text-sm text-zinc-500">-</TableCell>
+      <TableCell className="text-sm text-zinc-500"> (unchanged)</TableCell>
 
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">

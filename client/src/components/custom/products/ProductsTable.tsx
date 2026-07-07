@@ -33,6 +33,7 @@ type Props = {
   onUpdateFilters: (updates: Partial<ProductFilters>) => void;
   onRemove: UseMutateFunction<{ success: boolean }, Error, string, unknown>;
   setEditingId: Dispatch<SetStateAction<string | null>>;
+  onChangeStatus: (id: string) => Promise<void>;
 };
 
 const ProductsTable = ({
@@ -47,6 +48,7 @@ const ProductsTable = ({
   onUpdateFilters,
   onRemove,
   setEditingId,
+  onChangeStatus,
 }: Props) => {
   const getSortIcon = (field: ProductSortField) => {
     if (filters.sortBy !== field) {
@@ -119,6 +121,7 @@ const ProductsTable = ({
                   profile={profile}
                   onEdit={() => setEditingId(product.id)}
                   onRemove={() => onRemove(product.id)}
+                  onActivate={onChangeStatus}
                 />
               ),
             )
