@@ -11,6 +11,8 @@ import { useAuthStore } from "../stores/auth.store";
 import ProductCreateDialog from "../components/custom/products/ProductCreateDialog";
 import ProductsFilters from "../components/custom/products/ProductsFilters";
 import ProductsTable from "../components/custom/products/ProductsTable";
+import { handleError } from "../shared/errors/handleError";
+import { storageService } from "../services/storage.service";
 
 const ProductsPage = () => {
   const [filters, setFilters] = useState<ProductFilters>(
@@ -24,16 +26,37 @@ const ProductsPage = () => {
 
   const profile = useAuthStore((s) => s.profile);
 
-  const handleCreate = async (data: ProductFormData): Promise<Product> => {
-    const product = await createAsync({
-      title: data.title,
-      description: data.description,
-      status: data.status ?? "Draft",
-    });
+  const handleCreate = async (
+    data: ProductFormData,
+    file: File | null,
+  ): Promise<Product | undefined> => {
+    try {
+      const product = await createAsync({
+        title: data.title,
+        description: data.description,
+        status: data.status ?? "Draft",
+      });
 
-    setIsFormOpen(false);
+      if (file) {
+        const imagePath = await storageService.uploadProductImage(
+          product.id,
+          file,
+        );
 
-    return product;
+        await update({
+          id: product.id,
+          data: {
+            image_path: imagePath,
+          },
+        });
+      }
+
+      setIsFormOpen(false);
+
+      return product;
+    } catch (error) {
+      handleError(error);
+    }
   };
 
   const handleUpdate = (id: string, data: Partial<Product>) => {
@@ -78,7 +101,7 @@ const ProductsPage = () => {
 
         <ProductCreateDialog
           isFormOpen={isFormOpen}
-          onCloseModal={() => setIsFormOpen(false)}
+          setIsFormOpen={setIsFormOpen}
           onCreate={handleCreate}
         />
       </div>

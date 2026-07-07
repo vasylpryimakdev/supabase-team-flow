@@ -11,7 +11,6 @@ import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { Textarea } from "../../ui/textarea";
 
-import { storageService } from "../../../services/storage.service";
 import { handleError } from "../../../shared/errors/handleError";
 
 import { Spinner } from "../common/Spinner";
@@ -19,7 +18,10 @@ import type { Product } from "../../../types/product.types";
 
 type Props = {
   closeModal: () => void;
-  onCreate: (data: ProductFormData) => Promise<Product>;
+  onCreate: (
+    data: ProductFormData,
+    file: File | null,
+  ) => Promise<Product | undefined>;
 };
 
 export const ProductForm = ({ closeModal, onCreate }: Props) => {
@@ -40,11 +42,7 @@ export const ProductForm = ({ closeModal, onCreate }: Props) => {
     setLoading(true);
 
     try {
-      const product = await onCreate(data);
-
-      if (selectedFile) {
-        await storageService.uploadProductImage(product.id, selectedFile);
-      }
+      await onCreate(data, selectedFile);
 
       closeModal();
     } catch (err) {

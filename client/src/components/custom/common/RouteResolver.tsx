@@ -8,6 +8,7 @@ const authRoutes = [
   "/auth/signup",
   "/auth/forgot-password",
   "/reset-password",
+  "/onboarding",
 ];
 
 export function RouteResolver({ children }: { children: React.ReactNode }) {

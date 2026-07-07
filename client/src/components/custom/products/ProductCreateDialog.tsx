@@ -12,13 +12,20 @@ import type { ProductFormData } from "../../../shared/schemas/product.schema";
 
 type Props = {
   isFormOpen: boolean;
-  onCloseModal: () => void;
-  onCreate: (data: ProductFormData) => Promise<Product>;
+  setIsFormOpen: (open: boolean) => void;
+  onCreate: (
+    data: ProductFormData,
+    file: File | null,
+  ) => Promise<Product | undefined>;
 };
 
-const ProductCreateDialog = ({ isFormOpen, onCloseModal, onCreate }: Props) => {
+const ProductCreateDialog = ({
+  isFormOpen,
+  setIsFormOpen,
+  onCreate,
+}: Props) => {
   return (
-    <Dialog open={isFormOpen} onOpenChange={onCloseModal}>
+    <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
       <DialogTrigger asChild>
         <Button>+ New product</Button>
       </DialogTrigger>
@@ -28,7 +35,10 @@ const ProductCreateDialog = ({ isFormOpen, onCloseModal, onCreate }: Props) => {
           <DialogTitle>Create New Product</DialogTitle>
         </DialogHeader>
 
-        <ProductForm closeModal={onCloseModal} onCreate={onCreate} />
+        <ProductForm
+          closeModal={() => setIsFormOpen(false)}
+          onCreate={onCreate}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { deleteTeamFiles } from "../_shared/storage.ts";
 import { supabaseAdmin } from "../_shared/supabase.ts";
 
 async function getUser(req: Request) {
@@ -145,28 +146,25 @@ Deno.serve(async (req) => {
         return error("Only owner can delete team", 403);
       }
 
-      const { data: team } = await supabaseAdmin
-        .from("teams")
-        .select("avatar_path")
-        .eq("id", profile.team_id)
-        .single();
+      try {
+        await deleteTeamFiles(profile.team_id);
 
-      const { error: delError } = await supabaseAdmin
-        .from("teams")
-        .delete()
-        .eq("id", profile.team_id);
+        const { error: delError } = await supabaseAdmin
+          .from("teams")
+          .delete()
+          .eq("id", profile.team_id);
 
-      if (delError) {
-        return error("Failed to delete team: " + delError.message, 500);
+        if (delError) {
+          return error("Failed to delete team: " + delError.message, 500);
+        }
+
+        return json({ message: "Team deleted successfully" });
+      } catch (err) {
+        return error(
+          err instanceof Error ? err.message : "Failed to delete team files",
+          500,
+        );
       }
-
-      if (team?.avatar_path) {
-        await supabaseAdmin.storage
-          .from("team-avatars")
-          .remove([team.avatar_path]);
-      }
-
-      return json({ message: "Team deleted successfully" });
     }
 
     return error("Method not allowed", 405);
