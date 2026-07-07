@@ -125,6 +125,7 @@ export const ProductEditRow = ({
       </TableCell>
 
       <TableCell className="text-sm text-zinc-500"> (unchanged)</TableCell>
+      <TableCell className="text-sm text-zinc-500"> (unchanged)</TableCell>
 
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">

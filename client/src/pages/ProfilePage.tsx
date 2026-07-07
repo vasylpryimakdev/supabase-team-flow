@@ -94,7 +94,7 @@ export const ProfilePage = () => {
 
           <form onSubmit={handleUpdateProfile} className="space-y-2">
             <Label htmlFor="profile-name">Name</Label>
-            <div className="flex gap-1">
+            <div className="flex gap-1 items-stretch">
               <Input
                 id="profile-name"
                 type="text"
@@ -105,7 +105,11 @@ export const ProfilePage = () => {
                 disabled={isUpdating}
                 className="w-full"
               />
-              <Button type="submit" disabled={isUpdating || !name.trim()}>
+              <Button
+                type="submit"
+                disabled={isUpdating || !name.trim()}
+                className="h-auto"
+              >
                 {isUpdating ? <Spinner /> : "Save Changes"}
               </Button>
             </div>

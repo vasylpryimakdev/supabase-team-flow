@@ -46,7 +46,10 @@ const ProductsFilters = ({ profile, filters, onUpdateFilters }: Props) => {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
 
-          <SelectContent>
+          <SelectContent
+            position="popper"
+            className="w-[var(--radix-select-trigger-width)]"
+          >
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="Draft">Draft</SelectItem>
             <SelectItem value="Active">Active</SelectItem>
@@ -65,7 +68,10 @@ const ProductsFilters = ({ profile, filters, onUpdateFilters }: Props) => {
             <SelectValue placeholder="Created by" />
           </SelectTrigger>
 
-          <SelectContent>
+          <SelectContent
+            position="popper"
+            className="w-[var(--radix-select-trigger-width)]"
+          >
             <SelectItem value="all">All creators</SelectItem>
 
             {members.map((member) => (

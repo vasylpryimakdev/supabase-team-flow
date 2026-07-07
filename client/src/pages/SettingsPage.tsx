@@ -130,14 +130,14 @@ const SettingsPage = () => {
             />
             <div className="grid gap-1.5">
               <Label>Update Team Name</Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-stretch">
                 <Input
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                 />
                 <Button
                   variant="outline"
-                  className="w-36"
+                  className="w-36 h-auto"
                   onClick={handleUpdateName}
                 >
                   <Save className="mr-2 size-4" /> Save

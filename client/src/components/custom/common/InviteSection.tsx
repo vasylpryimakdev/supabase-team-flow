@@ -72,7 +72,7 @@ export const InviteSection = ({ team }: Props) => {
       <CardContent className="space-y-6">
         <div className="grid w-full gap-1.5">
           <Label htmlFor="email">Email</Label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-stretch">
             <Input
               id="email"
               type="email"
@@ -81,7 +81,7 @@ export const InviteSection = ({ team }: Props) => {
               onChange={(e) => setEmail(e.target.value)}
             />
             <Button
-              className="w-36"
+              className="w-36 h-auto"
               onClick={handleInvite}
               disabled={loading || !email}
             >
