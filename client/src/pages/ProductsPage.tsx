@@ -21,8 +21,15 @@ const ProductsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { products, count, isLoading, createAsync, update, remove } =
-    useProducts(filters);
+  const {
+    products,
+    count,
+    isLoading,
+    isFetching,
+    createAsync,
+    update,
+    remove,
+  } = useProducts(filters);
 
   const profile = useAuthStore((s) => s.profile);
 
@@ -115,7 +122,7 @@ const ProductsPage = () => {
         products={products}
         filters={filters}
         count={count}
-        isLoading={isLoading}
+        isLoading={isLoading || isFetching}
         profile={profile}
         onSort={handleSort}
         editingId={editingId}
