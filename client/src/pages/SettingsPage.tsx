@@ -205,13 +205,12 @@ const SettingsPage = () => {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel variant="outline" size={""}>
+                  <AlertDialogCancel variant="outline" >
                     Cancel
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleLeaveTeam}
                     variant="destructive"
-                    size={""}
                   >
                     <LogOut className="mr-2 size-4" />
                     Leave Team

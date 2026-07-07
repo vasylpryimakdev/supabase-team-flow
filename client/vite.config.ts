@@ -4,6 +4,15 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+
+  css: {
+    transformer: "postcss",
+  },
+
+  build: {
+    cssMinify: "esbuild",
+  },
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
