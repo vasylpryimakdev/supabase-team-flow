@@ -150,7 +150,7 @@ const SettingsPage = () => {
               <AlertDialogTrigger asChild>
                 <Button
                   variant="destructive"
-                  className="w-full transition-all duration-200 hover:bg-red-700"
+                  className="w-full transition-all duration-200 "
                 >
                   <Trash2 className="mr-2 size-4" />
                   Delete Team
@@ -172,7 +172,6 @@ const SettingsPage = () => {
                     onClick={handleDeleteTeam}
                     variant="destructive"
                     size="default"
-                    className="w-full hover:bg-red-700"
                   >
                     <Trash2 className="mr-2 size-4" />
                     Delete Team
@@ -213,7 +212,6 @@ const SettingsPage = () => {
                     onClick={handleLeaveTeam}
                     variant="destructive"
                     size={""}
-                    className=" hover:bg-red-700"
                   >
                     <LogOut className="mr-2 size-4" />
                     Leave Team
