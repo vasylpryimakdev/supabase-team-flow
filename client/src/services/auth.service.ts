@@ -12,7 +12,7 @@ export const authService = {
     return data;
   },
 
-  signUp: async (email: string, password: string, name: string) => {
+  signUp: async (name: string, email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
