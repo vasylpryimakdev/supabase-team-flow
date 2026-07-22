@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
         html: `
           <h1>You've been invited!</h1>
           <p>You have been invited to join a team. Click the link below to accept the invitation:</p>
-          <a href="http://localhost:5173/onboarding?code=${teamCode}">Join the team</a>
+          <a href="https://supabase-team-flow.vercel.app/onboarding?code=${teamCode}">Join the team</a>
           <p>Or you can simply enter this code manually: <strong>${teamCode}</strong></p>
           <br>
           <p>Best regards,<br>The Team App Team</p>
